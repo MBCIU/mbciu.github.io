@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Encryption Tool</title>
+    <script>
+        async function encryptImage() {
+            const fileInput = document.getElementById('imageInput');
+            const password = document.getElementById('password').value;
+            if (!fileInput.files.length || !password) {
+                alert("Please select an image and enter a password.");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.readAsArrayBuffer(file);
+            reader.onload = async function () {
+                const iv = crypto.getRandomValues(new Uint8Array(12));
+                const key = await deriveKey(password);
+                const encryptedData = await crypto.subtle.encrypt(
+                    { name: "AES-GCM", iv: iv }, key, reader.result
+                );
+                
+                const encryptedBlob = new Blob([iv, new Uint8Array(encryptedData)], { type: "application/octet-stream" });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(encryptedBlob);
+                link.download = file.name + ".enc";
+                link.click();
+            };
+        }
+
+        async function decryptImage() {
+            const fileInput = document.getElementById('encryptedInput');
+            const password = document.getElementById('decryptPassword').value;
+            if (!fileInput.files.length || !password) {
+                alert("Please select an encrypted file and enter a password.");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.readAsArrayBuffer(file);
+            reader.onload = async function () {
+                const data = new Uint8Array(reader.result);
+                const iv = data.slice(0, 12);
+                const encryptedData = data.slice(12);
+                const key = await deriveKey(password);
+
+                try {
+                    const decryptedData = await crypto.subtle.decrypt(
+                        { name: "AES-GCM", iv: iv }, key, encryptedData
+                    );
+                    
+                    const blob = new Blob([decryptedData], { type: "image/png" });
+                    const imgURL = URL.createObjectURL(blob);
+                    document.getElementById('decryptedImage').src = imgURL;
+                } catch (e) {
+                    alert("Incorrect password or corrupted file.");
+                }
+            };
+        }
+
+        async function deriveKey(password) {
+            const enc = new TextEncoder();
+            const keyMaterial = await crypto.subtle.importKey(
+                "raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]
+            );
+            return crypto.subtle.deriveKey(
+                { name: "PBKDF2", salt: new Uint8Array(16), iterations: 100000, hash: "SHA-256" },
+                keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
+            );
+        }
+    </script>
+</head>
+<body>
+    <h2>Encrypt an Image</h2>
+    <input type="file" id="imageInput" accept="image/*"><br>
+    <input type="password" id="password" placeholder="Enter password"><br>
+    <button onclick="encryptImage()">Encrypt & Download</button>
+    
+    <h2>Decrypt an Image</h2>
+    <input type="file" id="encryptedInput" accept=".enc"><br>
+    <input type="password" id="decryptPassword" placeholder="Enter password"><br>
+    <button onclick="decryptImage()">Decrypt</button><br>
+    <img id="decryptedImage" style="max-width:100%; margin-top:10px;">
+</body>
+</html>
