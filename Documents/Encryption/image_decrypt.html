@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Image Viewer</title>
+    <script>
+        let decryptedKey;
+
+        async function deriveKey(password) {
+            const enc = new TextEncoder();
+            const keyMaterial = await crypto.subtle.importKey(
+                "raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]
+            );
+            return crypto.subtle.deriveKey(
+                { name: "PBKDF2", salt: new Uint8Array(16), iterations: 100000, hash: "SHA-256" },
+                keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
+            );
+        }
+
+        async function decryptImage(password) {
+            const imageUrl = "https://raw.githubusercontent.com/your-repo/Warda.jpeg.enc";
+            
+            try {
+                const response = await fetch(imageUrl);
+                const encryptedData = new Uint8Array(await response.arrayBuffer());
+                const iv = encryptedData.slice(0, 12);
+                const encryptedContent = encryptedData.slice(12);
+                
+                const key = await deriveKey(password);
+                const decryptedData = await crypto.subtle.decrypt(
+                    { name: "AES-GCM", iv: iv }, key, encryptedContent
+                );
+                
+                const blob = new Blob([decryptedData], { type: "image/png" });
+                const imgURL = URL.createObjectURL(blob);
+                document.getElementById("decryptedImage").src = imgURL;
+                document.getElementById("showImageButton").style.display = "none";
+            } catch (e) {
+                alert("Incorrect password or unable to decrypt the image.");
+            }
+        }
+
+        function unlockPage() {
+            const password = document.getElementById("password").value;
+            document.getElementById("protectedSection").style.display = "block";
+            document.getElementById("loginSection").style.display = "none";
+            decryptedKey = password;
+        }
+    </script>
+</head>
+<body>
+    <div id="loginSection">
+        <h2>Enter Password</h2>
+        <input type="password" id="password" placeholder="Enter password">
+        <button onclick="unlockPage()">Unlock</button>
+    </div>
+    
+    <div id="protectedSection" style="display: none;">
+        <h2>Encrypted Image Viewer</h2>
+        <button id="showImageButton" onclick="decryptImage(decryptedKey)">Show Image</button>
+        <br>
+        <img id="decryptedImage" style="max-width: 100%; margin-top: 10px; display: block;">
+    </div>
+</body>
+</html>
