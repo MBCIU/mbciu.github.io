@@ -33,35 +33,47 @@
     <h2>2. What is StatiCrypt?</h2>
     <p>StatiCrypt is a tool that encrypts your static HTML files using AES-256. It generates a password-protected HTML file that users can decrypt in their browser.</p>
     
-    <h2>3. Install StatiCrypt</h2>
+    <h2>3. Web-Based StatiCrypt</h2>
+    <p>If you prefer not to use the command line, you can use the web-based version of StatiCrypt:</p>
+    <p><a href="https://robinmoisson.github.io/staticrypt/" target="_blank">StatiCrypt Web App</a></p>
+    <p>Steps to encrypt a file using the web version:</p>
+    <ul>
+        <li>Open the <a href="https://robinmoisson.github.io/staticrypt/" target="_blank">StatiCrypt web app</a>.</li>
+        <li>Paste your HTML content into the provided text area.</li>
+        <li>Enter a strong password.</li>
+        <li>Click "Encrypt" to generate a secure HTML file.</li>
+        <li>Download and share the encrypted file as needed.</li>
+    </ul>
+    
+    <h2>4. Install StatiCrypt (Command Line)</h2>
     <p>You can install StatiCrypt using npm. Open a terminal and run:</p>
     <pre><code>npm install -g staticrypt</code></pre>
     
-    <h2>4. Encrypt an HTML File</h2>
+    <h2>5. Encrypt an HTML File</h2>
     <p>To encrypt a file (e.g., <code>myfile.html</code>), use the following command:</p>
     <pre><code>staticrypt myfile.html mySecretPassword</code></pre>
     <p>This will generate an encrypted HTML file, typically named <code>myfile_encrypted.html</code>, which prompts users to enter a password.</p>
     
-    <h2>5. Customize Encryption Options</h2>
+    <h2>6. Customize Encryption Options</h2>
     <p>StatiCrypt provides options to customize the encryption process. For example, to change the output filename, use:</p>
     <pre><code>staticrypt myfile.html mySecretPassword -o encrypted.html</code></pre>
     
-    <h2>6. Decrypting the File</h2>
+    <h2>7. Decrypting the File</h2>
     <p>To decrypt the file, simply open it in a browser. StatiCrypt will prompt you for a password. Enter the password used during encryption to access the original content.</p>
     
-    <h2>7. Additional Options</h2>
+    <h2>8. Additional Options</h2>
     <ul>
         <li><code>--title "Custom Title"</code> - Set a custom title for the encrypted file.</li>
         <li><code>--template "template.html"</code> - Use a custom HTML template.</li>
         <li><code>--password-input "Enter Password"</code> - Customize the password prompt.</li>
     </ul>
     
-    <h2>8. Example Use Case</h2>
+    <h2>9. Example Use Case</h2>
     <p>If you have a private HTML file with sensitive information, encrypt it with:</p>
     <pre><code>staticrypt private.html superSecure123</code></pre>
     <p>Then share the <code>private_encrypted.html</code> file with the intended recipient. They only need a browser and the correct password to view it.</p>
     
-    <h2>9. Conclusion</h2>
+    <h2>10. Conclusion</h2>
     <p>StatiCrypt is a simple and effective way to protect static HTML content. By encrypting sensitive files, you ensure data security without relying on external services.</p>
 </body>
 </html>
