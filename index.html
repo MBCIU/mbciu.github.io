@@ -1,36 +1,55 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Login Page</title>
+  <title>Login</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script>
-    function login(event) {
-      event.preventDefault();
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
-
-      // Example: Hardcoded users (insecure!)
-      const users = {
-        "admin": { password: "admin123", allowedPages: ["admin.html", "user.html"] },
-        "user": { password: "user123", allowedPages: ["user.html"] }
-      };
-
-      if (users[username] && users[username].password === password) {
-        sessionStorage.setItem("username", username);
-        sessionStorage.setItem("allowedPages", JSON.stringify(users[username].allowedPages));
-        window.location.href = "dashboard.html";
-      } else {
-        alert("Invalid credentials");
-      }
-    }
+    const firebaseConfig = {
+  apiKey: "AIzaSyBQ0RJeM0tMZ0ro0EjdOfmBgCb1DZS87_c",
+  authDomain: "mbciu-auth.firebaseapp.com",
+  projectId: "mbciu-auth",
+  storageBucket: "mbciu-auth.firebasestorage.app",
+  messagingSenderId: "406163757457",
+  appId: "1:406163757457:web:5317052f0c417c1e14a230"
+};
+    firebase.initializeApp(firebaseConfig);
   </script>
 </head>
 <body>
   <h2>Login</h2>
-  <form onsubmit="login(event)">
-    <label>Username: <input type="text" id="username" required></label><br><br>
-    <label>Password: <input type="password" id="password" required></label><br><br>
-    <button type="submit">Login</button>
-  </form>
+  <input type="email" id="email" placeholder="Email"><br><br>
+  <input type="password" id="password" placeholder="Password"><br><br>
+  <button onclick="login()">Login</button>
+  <button onclick="signup()">Sign Up</button>
+
+  <script>
+    function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      firebase.auth().signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          // Redirect after login
+          window.location.href = "dashboard.html";
+        })
+        .catch((error) => {
+          alert("Login Failed: " + error.message);
+        });
+    }
+
+    function signup() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      firebase.auth().createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          alert("Signup successful! You can now log in.");
+        })
+        .catch((error) => {
+          alert("Signup Failed: " + error.message);
+        });
+    }
+  </script>
 </body>
 </html>
