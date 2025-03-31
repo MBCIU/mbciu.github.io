@@ -8,6 +8,8 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
   <script>
     // 🔐 Firebase config
     const firebaseConfig = {
@@ -24,6 +26,7 @@
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-gradient-to-r from-blue-100 to-purple-100 min-h-screen flex items-center justify-center p-4">
 
   <div class="w-full max-w-md bg-white shadow-2xl rounded-xl overflow-hidden">
@@ -34,11 +37,23 @@
     <div class="p-6">
       <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Login to MBCIU</h2>
       <div class="space-y-4">
-        <input id="email" type="email" placeholder="Email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input id="password" type="password" placeholder="Password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        
-        <button onclick="login()" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">Login</button>
-        <button onclick="signup()" class="w-full border border-blue-600 text-blue-600 py-2 rounded-lg hover:bg-blue-50 transition">Sign Up</button>
+
+        <input id="email" type="email" placeholder="Email"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input id="password" type="password" placeholder="Password"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+
+        <button onclick="login()"
+          class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">Login</button>
+        <button onclick="signup()"
+          class="w-full border border-blue-600 text-blue-600 py-2 rounded-lg hover:bg-blue-50 transition">Sign Up</button>
+      </div>
+
+      <div class="mt-6 text-center text-sm text-gray-600">— or login with —</div>
+
+      <div class="flex flex-col gap-3 mt-4">
+        <button onclick="loginWithGoogle()"
+          class="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition">Continue with Google</button>
       </div>
     </div>
   </div>
@@ -49,8 +64,20 @@
       const password = document.getElementById("password").value;
 
       firebase.auth().signInWithEmailAndPassword(email, password)
-        .then(() => {
-          window.location.href = "dashboard.html";
+        .then((userCredential) => {
+          const user = userCredential.user;
+
+          firebase.database().ref("users/" + user.uid).once("value")
+            .then(snapshot => {
+              const data = snapshot.val();
+
+              if (data && data.approved) {
+                window.location.href = "dashboard.html";
+              } else {
+                firebase.auth().signOut();
+                alert("Your account is awaiting admin approval.");
+              }
+            });
         })
         .catch(error => {
           alert("Login Failed: " + error.message);
@@ -62,11 +89,44 @@
       const password = document.getElementById("password").value;
 
       firebase.auth().createUserWithEmailAndPassword(email, password)
-        .then(() => {
-          alert("Signup successful! You can now log in.");
+        .then((userCredential) => {
+          const user = userCredential.user;
+
+          firebase.database().ref("users/" + user.uid).set({
+            email: email,
+            approved: false
+          });
+
+          alert("Signup successful! Await admin approval.");
         })
         .catch(error => {
           alert("Signup Failed: " + error.message);
+        });
+    }
+
+    function loginWithGoogle() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+
+      firebase.auth().signInWithPopup(provider)
+        .then((result) => {
+          const user = result.user;
+
+          firebase.database().ref("users/" + user.uid).once("value")
+            .then(snapshot => {
+              if (snapshot.exists() && snapshot.val().approved) {
+                window.location.href = "dashboard.html";
+              } else {
+                firebase.database().ref("users/" + user.uid).set({
+                  email: user.email,
+                  approved: false
+                });
+                firebase.auth().signOut();
+                alert("Google login successful, but your account needs admin approval.");
+              }
+            });
+        })
+        .catch(error => {
+          alert("Google login failed: " + error.message);
         });
     }
   </script>
