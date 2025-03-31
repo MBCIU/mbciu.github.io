@@ -1,38 +1,85 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" class="dark">
 <head>
-  <title>Dashboard</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard | MBCIU</title>
+
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Enable dark mode class support -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    };
+  </script>
+
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSy...YOUR_KEY...",
-      authDomain: "your-project-id.firebaseapp.com",
-      projectId: "your-project-id",
-      storageBucket: "your-project-id.appspot.com",
-      messagingSenderId: "1234567890",
-      appId: "1:1234567890:web:abc123"
+      apiKey: "AIzaSyBQ0RJeM0tMZ0ro0EjdOfmBgCb1DZS87_c",
+      authDomain: "mbciu-auth.firebaseapp.com",
+      projectId: "mbciu-auth",
+      storageBucket: "mbciu-auth.firebasestorage.app",
+      messagingSenderId: "406163757457",
+      appId: "1:406163757457:web:5317052f0c417c1e14a230"
     };
     firebase.initializeApp(firebaseConfig);
   </script>
 </head>
-<body>
-  <h2>Welcome to the Dashboard</h2>
-  <p>This page is protected and only accessible after login.</p>
-  <button onclick="logout()">Logout</button>
+
+<body class="bg-gradient-to-br from-white to-gray-100 dark:from-gray-900 dark:to-black min-h-screen text-gray-900 dark:text-gray-100 transition-all">
+
+  <div class="max-w-3xl mx-auto px-4 py-8">
+    
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+      <div class="flex items-center gap-2">
+        <img src="logo.png" alt="MBCIU Logo" class="h-10 w-10 rounded-full" onerror="this.style.display='none';"/>
+        <h1 class="text-2xl font-bold">MBCIU Dashboard</h1>
+      </div>
+      <button onclick="toggleDarkMode()" class="text-sm text-blue-500 hover:underline">🌓 Toggle Dark Mode</button>
+    </div>
+
+    <!-- Content -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+      <h2 class="text-xl font-semibold mb-2">Welcome!</h2>
+      <p class="mb-4">You are logged in to your MBCIU account. Explore the tools and features available to you.</p>
+
+      <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">Logout</button>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-10 text-center text-sm text-gray-500 dark:text-gray-400">
+      &copy; <span id="year"></span> Warda Syeda | MBCIU
+    </footer>
+  </div>
 
   <script>
-    firebase.auth().onAuthStateChanged((user) => {
-      if (!user) {
-        window.location.href = "index.html"; // Redirect if not logged in
-      }
-    });
+    // Dark mode toggle
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+    }
 
+    // Logout
     function logout() {
       firebase.auth().signOut().then(() => {
         window.location.href = "index.html";
       });
     }
+
+    // Redirect if not authenticated
+    firebase.auth().onAuthStateChanged((user) => {
+      if (!user) {
+        window.location.href = "index.html";
+      }
+    });
+
+    // Set current year in footer
+    document.getElementById("year").textContent = new Date().getFullYear();
   </script>
+
 </body>
 </html>
