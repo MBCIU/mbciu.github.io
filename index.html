@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login Page</title>
+  <script>
+    function login(event) {
+      event.preventDefault();
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+
+      // Example: Hardcoded users (insecure!)
+      const users = {
+        "admin": { password: "admin123", allowedPages: ["admin.html", "user.html"] },
+        "user": { password: "user123", allowedPages: ["user.html"] }
+      };
+
+      if (users[username] && users[username].password === password) {
+        sessionStorage.setItem("username", username);
+        sessionStorage.setItem("allowedPages", JSON.stringify(users[username].allowedPages));
+        window.location.href = "dashboard.html";
+      } else {
+        alert("Invalid credentials");
+      }
+    }
+  </script>
+</head>
+<body>
+  <h2>Login</h2>
+  <form onsubmit="login(event)">
+    <label>Username: <input type="text" id="username" required></label><br><br>
+    <label>Password: <input type="password" id="password" required></label><br><br>
+    <button type="submit">Login</button>
+  </form>
+</body>
+</html>
