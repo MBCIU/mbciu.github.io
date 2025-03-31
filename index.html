@@ -52,8 +52,17 @@
       <div class="mt-6 text-center text-sm text-gray-600">— or login with —</div>
 
       <div class="flex flex-col gap-3 mt-4">
+        <!-- Google login -->
         <button onclick="loginWithGoogle()"
-          class="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition">Continue with Google</button>
+          class="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition">
+          Continue with Google
+        </button>
+
+        <!-- Microsoft login -->
+        <button onclick="loginWithMicrosoft()"
+          class="w-full bg-gray-800 text-white py-2 rounded-lg hover:bg-gray-900 transition">
+          Continue with Microsoft
+        </button>
       </div>
     </div>
   </div>
@@ -127,6 +136,32 @@
         })
         .catch(error => {
           alert("Google login failed: " + error.message);
+        });
+    }
+
+    function loginWithMicrosoft() {
+      const provider = new firebase.auth.OAuthProvider('microsoft.com');
+
+      firebase.auth().signInWithPopup(provider)
+        .then((result) => {
+          const user = result.user;
+
+          firebase.database().ref("users/" + user.uid).once("value")
+            .then(snapshot => {
+              if (snapshot.exists() && snapshot.val().approved) {
+                window.location.href = "dashboard.html";
+              } else {
+                firebase.database().ref("users/" + user.uid).set({
+                  email: user.email,
+                  approved: false
+                });
+                firebase.auth().signOut();
+                alert("Microsoft login successful, but your account needs admin approval.");
+              }
+            });
+        })
+        .catch(error => {
+          alert("Microsoft login failed: " + error.message);
         });
     }
   </script>
