@@ -76,8 +76,10 @@
     }
 
     function notifyAdminAndUser(user) {
+      if (!user || !user.email || !user.uid) return;
       emailjs.send("service_1tqzrwr", "template_signup_alert", {
         email: user.email,
+        uid: user.uid
       });
       emailjs.send("service_1tqzrwr", "template_user_confirmation", {
         email: user.email
@@ -116,12 +118,18 @@
     function signupWithGoogle() {
       const provider = new firebase.auth.GoogleAuthProvider();
       firebase.auth().signInWithPopup(provider)
-        .then((result) => {
+        .then(async (result) => {
           const user = result.user;
-          firebase.database().ref("users/" + user.uid).set({
+          if (!user || !user.uid || !user.email) {
+            alert("Something went wrong. Could not retrieve user information.");
+            return;
+          }
+
+          await firebase.database().ref("users/" + user.uid).set({
             email: user.email,
             approved: false
           });
+
           notifyAdminAndUser(user);
           firebase.auth().signOut();
           window.location.href = "signup-success.html";
@@ -134,12 +142,18 @@
     function signupWithMicrosoft() {
       const provider = new firebase.auth.OAuthProvider('microsoft.com');
       firebase.auth().signInWithPopup(provider)
-        .then((result) => {
+        .then(async (result) => {
           const user = result.user;
-          firebase.database().ref("users/" + user.uid).set({
+          if (!user || !user.uid || !user.email) {
+            alert("Something went wrong. Could not retrieve user information.");
+            return;
+          }
+
+          await firebase.database().ref("users/" + user.uid).set({
             email: user.email,
             approved: false
           });
+
           notifyAdminAndUser(user);
           firebase.auth().signOut();
           window.location.href = "signup-success.html";
