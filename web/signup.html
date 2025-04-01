@@ -76,6 +76,8 @@
     }
 
     function notifyAdminAndUser(user) {
+      if (!user || !user.email) return;
+      alert("Signup initiated for: " + user.email);
       emailjs.send("service_1tqzrwr", "template_signup_alert", {
         email: user.email
       }).then(() => {
