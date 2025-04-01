@@ -95,24 +95,32 @@
         return;
       }
 
-      firebase.auth().createUserWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-          const user = userCredential.user;
+      firebase.auth().fetchSignInMethodsForEmail(email).then((methods) => {
+        if (methods.length > 0) {
+          alert("An account with this email already exists. Please log in instead.");
+        } else {
+          firebase.auth().createUserWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+              const user = userCredential.user;
 
-          firebase.database().ref("users/" + user.uid).set({
-            email: user.email,
-            approved: false
-          });
+              firebase.database().ref("users/" + user.uid).set({
+                email: user.email,
+                approved: false
+              });
 
-          user.sendEmailVerification().then(() => {
-            notifyAdminAndUser(user);
-            firebase.auth().signOut();
-            window.location.href = "signup-success.html";
-          });
-        })
-        .catch((error) => {
-          alert("Signup Failed: " + error.message);
-        });
+              user.sendEmailVerification().then(() => {
+                notifyAdminAndUser(user);
+                firebase.auth().signOut();
+                window.location.href = "signup-success.html";
+              });
+            })
+            .catch((error) => {
+              alert("Signup Failed: " + error.message);
+            });
+        }
+      }).catch((error) => {
+        alert("Error checking email: " + error.message);
+      });
     }
 
     function signupWithGoogle() {
@@ -122,6 +130,13 @@
           const user = result.user;
           if (!user || !user.email) {
             alert("Something went wrong. Could not retrieve user information.");
+            return;
+          }
+
+          const methods = await firebase.auth().fetchSignInMethodsForEmail(user.email);
+          if (methods.length > 0) {
+            alert("An account with this email already exists. Please log in instead.");
+            await firebase.auth().signOut();
             return;
           }
 
@@ -150,16 +165,22 @@
             return;
           }
 
+          const methods = await firebase.auth().fetchSignInMethodsForEmail(user.email);
+          if (methods.length > 0) {
+            alert("An account with this email already exists. Please log in instead.");
+            await firebase.auth().signOut();
+            return;
+          }
+
           await firebase.database().ref("users/" + user.uid).set({
             email: user.email,
             approved: false
           });
-          
+
           notifyAdminAndUser(user);
           await new Promise(resolve => setTimeout(resolve, 2000));
           firebase.auth().signOut();
           window.location.href = "signup-success.html";
-          
         })
         .catch((error) => {
           alert("Microsoft sign-up failed: " + error.message);
