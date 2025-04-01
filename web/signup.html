@@ -166,24 +166,23 @@
             return;
           }
 
-          const methods = await firebase.auth().fetchSignInMethodsForEmail(user.email);
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          alert(methods.length);
-          if (methods.length > 0) {
-            alert("An account with this email already exists. Please log in instead.");
-            await firebase.auth().signOut();
-            return;
-          }
-
-          await firebase.database().ref("users/" + user.uid).set({
-            email: user.email,
-            approved: false
+          firebase.database().ref("users/" + user.uid).once("value", (snapshot) => {
+            if (snapshot.exists()) {
+              alert("An account with this email already exists. Please log in instead.");
+              firebase.auth().signOut();
+              return;
+            } else {
+              firebase.database().ref("users/" + user.uid).set({
+                email: user.email,
+                approved: false
+              });
+              notifyAdminAndUser(user);
+              setTimeout(() => {
+                firebase.auth().signOut();
+                window.location.href = "signup-success.html";
+              }, 2000);
+            }
           });
-
-          notifyAdminAndUser(user);
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          firebase.auth().signOut();
-          window.location.href = "signup-success.html";
         })
         .catch((error) => {
           alert("Microsoft sign-up failed: " + error.message);
