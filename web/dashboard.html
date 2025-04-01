@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard | MBCIU</title>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Enable dark mode -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    };
+  </script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQ0RJeM0tMZ0ro0EjdOfmBgCb1DZS87_c",
+      authDomain: "mbciu-auth.firebaseapp.com",
+      projectId: "mbciu-auth",
+      storageBucket: "mbciu-auth.firebasestorage.app",
+      messagingSenderId: "406163757457",
+      appId: "1:406163757457:web:5317052f0c417c1e14a230"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+</head>
+
+<body class="bg-gradient-to-br from-white to-gray-100 dark:from-gray-900 dark:to-black min-h-screen text-gray-900 dark:text-gray-100 transition-all">
+  <div class="max-w-3xl mx-auto px-4 py-8">
+
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+      <div class="flex items-center gap-2">
+        <img src="logo.png" alt="MBCIU Logo" class="h-10 w-10 rounded-full" onerror="this.style.display='none';"/>
+        <h1 class="text-2xl font-bold">MBCIU Dashboard</h1>
+      </div>
+      <button onclick="toggleDarkMode()" class="text-sm text-blue-500 hover:underline">🌓 Toggle Dark Mode</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+      <h2 class="text-xl font-semibold mb-4">Welcome!</h2>
+      <p class="mb-4" id="welcomeText">Checking your access...</p>
+
+      <div id="toolsContainer" class="space-y-4 hidden">
+        <div class="p-4 rounded-lg border dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+          <h3 class="font-semibold text-lg mb-2">Tool 1: NeuroData Visualizer</h3>
+          <p class="text-sm mb-2">Explore subject-level and group-level brain data using interactive charts and maps.</p>
+          <a href="tool1.html" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Open Tool</a>
+        </div>
+
+        <div class="p-4 rounded-lg border dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+          <h3 class="font-semibold text-lg mb-2">Tool 2: Affinity Score Checker</h3>
+          <p class="text-sm mb-2">Calculate personalized Affinity Scores to support individualized care in mental health.</p>
+          <a href="tool2.html" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Open Tool</a>
+        </div>
+      </div>
+
+      <!-- Request Access UI -->
+      <div id="accessRequest" class="text-center hidden mt-6">
+        <p class="mb-4 text-red-500">You don’t currently have access to the tools.</p>
+        <button onclick="requestAccess()" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Request Access</button>
+      </div>
+
+      <!-- Logout and Admin -->
+      <div class="mt-6 flex gap-4">
+        <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Logout</button>
+        <a href="admin.html" id="adminBtn" class="hidden bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800">Admin Panel</a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-10 text-center text-sm text-gray-500 dark:text-gray-400">
+      &copy; <span id="year"></span> Warda Syeda | MBCIU
+    </footer>
+  </div>
+
+  <script>
+    if (localStorage.getItem("theme") === "dark") {
+      document.documentElement.classList.add("dark");
+    }
+
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle("dark");
+      const isDark = document.documentElement.classList.contains("dark");
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+    }
+
+    function logout() {
+      firebase.auth().signOut().then(() => {
+        window.location.href = "/index.html";
+      });
+    }
+
+    const db = firebase.firestore();
+
+    firebase.auth().onAuthStateChanged(async (user) => {
+      if (!user) {
+        window.location.href = "/index.html";
+        return;
+      }
+
+      const adminEmails = ["wtsyeda@gmail.com", "wtsyeda@unimelb.edu.au"];
+      if (adminEmails.includes(user.email)) {
+        document.getElementById("adminBtn").classList.remove("hidden");
+      }
+
+      try {
+        const doc = await db.collection("users").doc(user.uid).get();
+        const userData = doc.data();
+
+        if (userData && userData.approved === true) {
+          document.getElementById("welcomeText").textContent = `You are approved to access MBCIU tools.`;
+          document.getElementById("toolsContainer").classList.remove("hidden");
+        } else {
+          document.getElementById("welcomeText").textContent = `Hi ${user.email}, your account has not been approved yet.`;
+          document.getElementById("accessRequest").classList.remove("hidden");
+        }
+
+      } catch (error) {
+        console.error("Error checking approval:", error);
+        document.getElementById("welcomeText").textContent = "Could not verify your approval status.";
+      }
+    });
+
+    function requestAccess() {
+      const user = firebase.auth().currentUser;
+      if (!user) return;
+
+      const userRef = db.collection("users").doc(user.uid);
+      userRef.set({
+        email: user.email,
+        requestedAccess: true,
+        approved: false
+      }, { merge: true }).then(() => {
+        alert("Access request sent to the admin.");
+      }).catch((error) => {
+        console.error("Error requesting access:", error);
+      });
+    }
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+
+</body>
+</html>
