@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Welcome | MBCIU</title>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    };
+  </script>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQ0RJeM0tMZ0ro0EjdOfmBgCb1DZS87_c",
+      authDomain: "mbciu-auth.firebaseapp.com",
+      projectId: "mbciu-auth",
+      storageBucket: "mbciu-auth.firebasestorage.app",
+      messagingSenderId: "406163757457",
+      appId: "1:406163757457:web:5317052f0c417c1e14a230"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    // Load dark mode preference
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    }
+  </script>
+</head>
+
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-all duration-300">
+
+  <!-- Header -->
+  <header class="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+    <div class="flex items-center gap-3">
+      <img src="logo.png" alt="Logo" class="h-10 w-10 rounded-full" onerror="this.style.display='none';"/>
+      <h1 class="text-2xl font-bold">MBCIU Portal</h1>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="toggleDarkMode()" class="text-sm hover:underline">🌓 Toggle Dark Mode</button>
+      <button id="logoutBtn" onclick="logout()" class="text-sm text-red-500 hover:underline hidden">Logout</button>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="text-center py-16 px-6">
+    <h2 class="text-3xl font-bold mb-4">Welcome to the MBCIU Project</h2>
+    <p class="max-w-xl mx-auto text-gray-600 dark:text-gray-300 mb-8">
+      A secure and transparent platform for meaningful collaboration. MBCIU empowers responsible data access and role-based user experiences.
+    </p>
+
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a href="login.html" id="loginBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Login</a>
+      <a href="admin.html" id="adminBtn" class="px-6 py-3 border border-gray-600 dark:border-gray-400 text-gray-800 dark:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">Admin Panel</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="text-center py-6 border-t border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400">
+    &copy; <span id="year"></span> Warda Syeda | MBCIU
+  </footer>
+
+  <script>
+    const logoutBtn = document.getElementById("logoutBtn");
+    const loginBtn = document.getElementById("loginBtn");
+    const adminBtn = document.getElementById("adminBtn");
+
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+    }
+
+    function logout() {
+      firebase.auth().signOut().then(() => {
+        window.location.reload();
+      });
+    }
+
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        logoutBtn.classList.remove("hidden");
+        loginBtn.classList.add("hidden");
+
+        const adminEmails = ["wtsyeda@gmail.com"];
+        if (!adminEmails.includes(user.email)) {
+          adminBtn.classList.add("hidden");
+        }
+      } else {
+        logoutBtn.classList.add("hidden");
+        loginBtn.classList.remove("hidden");
+      }
+    });
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+
+</body>
+</html>
