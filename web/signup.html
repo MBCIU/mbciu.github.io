@@ -134,6 +134,9 @@
           }
 
           const methods = await firebase.auth().fetchSignInMethodsForEmail(user.email);
+           await new Promise(resolve => setTimeout(resolve, 2000));
+          alert(methods.length);
+          
           if (methods.length > 0) {
             alert("An account with this email already exists. Please log in instead.");
             await firebase.auth().signOut();
