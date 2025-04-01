@@ -29,7 +29,7 @@
     };
     firebase.initializeApp(firebaseConfig);
 
-    // Load dark mode preference
+    // Load saved theme
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme === "dark") {
       document.documentElement.classList.add("dark");
@@ -37,43 +37,43 @@
   </script>
 </head>
 
-<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-all duration-300">
+<body class="bg-gradient-to-r from-blue-100 to-purple-100 dark:from-gray-900 dark:to-black min-h-screen text-gray-900 dark:text-white transition-all duration-300">
 
-  <!-- Header -->
-  <header class="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-    <div class="flex items-center gap-3">
-      <img src="logo.png" alt="Logo" class="h-10 w-10 rounded-full" onerror="this.style.display='none';"/>
-      <h1 class="text-2xl font-bold">MBCIU Portal</h1>
+  <div class="max-w-3xl mx-auto px-4 py-10">
+
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-10">
+      <div class="flex items-center gap-3">
+        <img src="logo.png" alt="Logo" class="h-10 w-10 rounded-full" onerror="this.style.display='none';"/>
+        <h1 class="text-2xl font-bold">MBCIU Portal</h1>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="toggleDarkMode()" class="text-sm hover:underline">🌓 Toggle Mode</button>
+        <button id="logoutBtn" onclick="logout()" class="text-sm text-red-500 hover:underline hidden">Logout</button>
+      </div>
     </div>
-    <div class="flex items-center gap-3">
-      <button onclick="toggleDarkMode()" class="text-sm hover:underline">🌓 Toggle Dark Mode</button>
-      <button id="logoutBtn" onclick="logout()" class="text-sm text-red-500 hover:underline hidden">Logout</button>
-    </div>
-  </header>
 
-  <!-- Hero Section -->
-  <section class="text-center py-16 px-6">
-    <h2 class="text-3xl font-bold mb-4">Welcome to the MBCIU Project</h2>
-    <p class="max-w-xl mx-auto text-gray-600 dark:text-gray-300 mb-8">
-      A secure and transparent platform for meaningful collaboration. MBCIU empowers responsible data access and role-based user experiences.
-    </p>
+    <!-- Welcome -->
+    <section class="text-center bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl">
+      <h2 class="text-3xl font-bold mb-4">Welcome to MBCIU</h2>
+      <p class="text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+        A secure and transparent platform for collaborative knowledge, individualized care, and responsible research. Please log in or sign up to access your tools.
+      </p>
 
-    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-      <a href="login.html" id="loginBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Login</a>
-      <a href="admin.html" id="adminBtn" class="px-6 py-3 border border-gray-600 dark:border-gray-400 text-gray-800 dark:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">Admin Panel</a>
-    </div>
-  </section>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="login.html" id="loginBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Login</a>
+        <a href="signup.html" id="signupBtn" class="px-6 py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition">Sign Up</a>
+        <a href="admin.html" id="adminBtn" class="px-6 py-3 border border-gray-500 dark:border-gray-400 text-gray-700 dark:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">Admin Panel</a>
+      </div>
+    </section>
 
-  <!-- Footer -->
-  <footer class="text-center py-6 border-t border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400">
-    &copy; <span id="year"></span> Warda Syeda | MBCIU
-  </footer>
+    <!-- Footer -->
+    <footer class="text-center mt-10 text-sm text-gray-600 dark:text-gray-400">
+      &copy; <span id="year"></span> Warda Syeda | MBCIU
+    </footer>
+  </div>
 
   <script>
-    const logoutBtn = document.getElementById("logoutBtn");
-    const loginBtn = document.getElementById("loginBtn");
-    const adminBtn = document.getElementById("adminBtn");
-
     function toggleDarkMode() {
       document.documentElement.classList.toggle('dark');
       const isDark = document.documentElement.classList.contains('dark');
@@ -87,9 +87,15 @@
     }
 
     firebase.auth().onAuthStateChanged((user) => {
+      const loginBtn = document.getElementById("loginBtn");
+      const signupBtn = document.getElementById("signupBtn");
+      const logoutBtn = document.getElementById("logoutBtn");
+      const adminBtn = document.getElementById("adminBtn");
+
       if (user) {
         logoutBtn.classList.remove("hidden");
         loginBtn.classList.add("hidden");
+        signupBtn.classList.add("hidden");
 
         const adminEmails = ["wtsyeda@gmail.com"];
         if (!adminEmails.includes(user.email)) {
@@ -98,6 +104,8 @@
       } else {
         logoutBtn.classList.add("hidden");
         loginBtn.classList.remove("hidden");
+        signupBtn.classList.remove("hidden");
+        adminBtn.classList.remove("hidden"); // optional: hide by default
       }
     });
 
