@@ -85,13 +85,6 @@
         console.error("❌ Failed to notify admin:", error);
       });
 
-      emailjs.send("service_1tqzrwr", "template_user_confirmation", {
-        email: user.email
-      }).then(() => {
-        console.log("✅ User notified of signup.");
-      }).catch((error) => {
-        console.error("❌ Failed to notify user:", error);
-      });
     }
 
     function signupWithEmail() {
