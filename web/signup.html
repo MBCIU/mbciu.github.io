@@ -156,8 +156,7 @@
           });
     
           notifyAdminAndUser(user);
-          firebase.auth().signOut();
-          window.location.href = "signup-success.html";
+          
         })
         .catch((error) => {
           alert("Microsoft sign-up failed: " + error.message);
