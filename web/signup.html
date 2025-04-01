@@ -75,6 +75,15 @@
       localStorage.setItem("theme", isDark ? "dark" : "light");
     }
 
+    function notifyAdminAndUser(user) {
+      emailjs.send("service_1tqzrwr", "template_signup_alert", {
+        email: user.email,
+      });
+      emailjs.send("service_1tqzrwr", "template_user_confirmation", {
+        email: user.email
+      });
+    }
+
     function signupWithEmail() {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
@@ -94,15 +103,7 @@
           });
 
           user.sendEmailVerification().then(() => {
-            emailjs.send("service_1tqzrwr", "template_signup_alert", {
-              email: user.email,
-              uid: user.uid
-            }).then(() => {
-              console.log("Admin notified");
-            }).catch((error) => {
-              console.error("EmailJS failed:", error);
-            });
-
+            notifyAdminAndUser(user);
             firebase.auth().signOut();
             window.location.href = "signup-success.html";
           });
@@ -117,21 +118,11 @@
       firebase.auth().signInWithPopup(provider)
         .then((result) => {
           const user = result.user;
-
           firebase.database().ref("users/" + user.uid).set({
             email: user.email,
             approved: false
           });
-
-          emailjs.send("service_1tqzrwr", "template_signup_alert", {
-            email: user.email,
-            uid: user.uid
-          }).then(() => {
-            console.log("Admin notified");
-          }).catch((error) => {
-            console.error("EmailJS failed:", error);
-          });
-
+          notifyAdminAndUser(user);
           firebase.auth().signOut();
           window.location.href = "signup-success.html";
         })
@@ -145,21 +136,11 @@
       firebase.auth().signInWithPopup(provider)
         .then((result) => {
           const user = result.user;
-
           firebase.database().ref("users/" + user.uid).set({
             email: user.email,
             approved: false
           });
-
-          emailjs.send("service_1tqzrwr", "template_signup_alert", {
-            email: user.email,
-            uid: user.uid
-          }).then(() => {
-            console.log("Admin notified");
-          }).catch((error) => {
-            console.error("EmailJS failed:", error);
-          });
-
+          notifyAdminAndUser(user);
           firebase.auth().signOut();
           window.location.href = "signup-success.html";
         })
