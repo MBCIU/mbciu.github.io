@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -10,6 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
   <script>
     tailwind.config = {
@@ -27,22 +28,17 @@
       appId: "1:406163757457:web:5317052f0c417c1e14a230"
     };
     firebase.initializeApp(firebaseConfig);
+    emailjs.init("NeoWvdWOFVFsHj6l1"); // Replace with your actual EmailJS public key
 
-    firebase.auth().onAuthStateChanged((user) => {
-  if (user) {
-    console.log("Logged in as:", user.email);
-    alert("You are logged in as: " + user.email);
-  }
-});
-    
+    if (localStorage.getItem("theme") === "dark") {
+      document.documentElement.classList.add("dark");
+    }
   </script>
 </head>
 
 <body class="bg-gradient-to-br from-white to-gray-100 dark:from-gray-900 dark:to-black min-h-screen text-gray-900 dark:text-gray-100 transition-all">
 
   <div class="max-w-4xl mx-auto px-4 py-8">
-
-    <!-- Header -->
     <div class="flex justify-between items-center mb-8">
       <h1 class="text-2xl font-bold">Admin Approval Panel</h1>
       <div class="flex gap-3 items-center">
@@ -51,51 +47,49 @@
       </div>
     </div>
 
-    <!-- Users Table -->
     <div class="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg">
       <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead class="bg-gray-100 dark:bg-gray-700">
           <tr>
             <th class="px-6 py-3 text-left text-sm font-semibold">Email</th>
+            <th class="px-6 py-3 text-left text-sm font-semibold">Email Verified</th>
             <th class="px-6 py-3 text-left text-sm font-semibold">Approved</th>
             <th class="px-6 py-3 text-left text-sm font-semibold">Action</th>
           </tr>
         </thead>
         <tbody id="userTable" class="divide-y divide-gray-200 dark:divide-gray-700">
-          <!-- User rows will be injected here -->
         </tbody>
       </table>
     </div>
 
-    <!-- Footer -->
     <footer class="mt-10 text-center text-sm text-gray-500 dark:text-gray-400">
       &copy; <span id="year"></span> Warda Syeda | MBCIU
     </footer>
-
   </div>
 
   <script>
     function toggleDarkMode() {
-      document.documentElement.classList.toggle('dark');
+      document.documentElement.classList.toggle("dark");
+      const isDark = document.documentElement.classList.contains("dark");
+      localStorage.setItem("theme", isDark ? "dark" : "light");
     }
 
     function logout() {
       firebase.auth().signOut().then(() => {
-        window.location.href = "../index.html";
+        window.location.href = "/index.html";
       });
     }
 
     firebase.auth().onAuthStateChanged((user) => {
       if (!user) {
-        window.location.href = "../index.html";
+        window.location.href = "/index.html";
         return;
       }
 
-      // Optional: Restrict admin access to specific user emails
       const adminEmails = ["wtsyeda@gmail.com", "wtsyeda@unimelb.edu.au"];
       if (!adminEmails.includes(user.email)) {
         alert("Access denied: You are not an admin.");
-        window.location.href = "web/dashboard.html";
+        window.location.href = "/web/dashboard.html";
         return;
       }
 
@@ -104,34 +98,48 @@
 
     function loadUsers() {
       const userTable = document.getElementById("userTable");
+      userTable.innerHTML = "";
+
       firebase.database().ref("users").once("value", (snapshot) => {
-        userTable.innerHTML = ""; // Clear table
         snapshot.forEach(child => {
           const uid = child.key;
           const data = child.val();
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td class="px-6 py-4">${data.email}</td>
-            <td class="px-6 py-4">${data.approved ? "✅ Yes" : "❌ No"}</td>
-            <td class="px-6 py-4">
-              ${data.approved ? "" : `<button onclick="approveUser('${uid}')" class="text-sm text-green-600 hover:underline">Approve</button>`}
-            </td>
-          `;
-          userTable.appendChild(row);
+
+          firebase.auth().getUser(uid).then((userRecord) => {
+            const emailVerified = userRecord.emailVerified;
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td class="px-6 py-4">${data.email}</td>
+              <td class="px-6 py-4">${emailVerified ? "✅ Yes" : "❌ No"}</td>
+              <td class="px-6 py-4">${data.approved ? "✅ Yes" : "❌ No"}</td>
+              <td class="px-6 py-4">
+                ${data.approved ? "" : `<button onclick="approveUser('${uid}', '${data.email}')" class="text-sm text-green-600 hover:underline">Approve</button>`}
+              </td>
+            `;
+            userTable.appendChild(row);
+          }).catch((error) => {
+            console.error("Error fetching user record:", error);
+          });
         });
       });
     }
 
-    function approveUser(uid) {
+    function approveUser(uid, email) {
       firebase.database().ref("users/" + uid).update({
         approved: true
       }).then(() => {
         alert("User approved!");
+        emailjs.send("service_1tqzrwr", "template_user_approved", {
+          email: email
+        }).then(() => {
+          console.log("Approval email sent to user.");
+        }).catch((error) => {
+          console.error("EmailJS error:", error);
+        });
         loadUsers();
       });
     }
 
-    // Footer year
     document.getElementById("year").textContent = new Date().getFullYear();
   </script>
 
