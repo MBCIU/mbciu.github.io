@@ -76,7 +76,6 @@
     }
 
     function notifyAdminAndUser(user) {
-      if (!user || !user.email) return;
       emailjs.send("service_1tqzrwr", "template_signup_alert", {
         email: user.email
       }).then(() => {
@@ -84,7 +83,6 @@
       }).catch((error) => {
         console.error("❌ Failed to notify admin:", error);
       });
-
     }
 
     function signupWithEmail() {
@@ -154,15 +152,8 @@
             email: user.email,
             approved: false
           });
-
-          emailjs.send("service_1tqzrwr", "template_user_approved", {
-          email: user.email
-        }).then(() => {
-          console.log("Signup email sent to user.");
-        }).catch((error) => {
-          console.error("EmailJS error:", error);
-        });
-          
+    
+          notifyAdminAndUser(user);
           firebase.auth().signOut();
           window.location.href = "signup-success.html";
         })
