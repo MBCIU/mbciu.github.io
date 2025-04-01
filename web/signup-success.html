@@ -19,24 +19,11 @@
       document.documentElement.classList.add("dark");
     }
   </script>
-
-  <style>
-    body {
-      position: relative;
-    }
-    canvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-      z-index: 50;
-    }
-  </style>
 </head>
 
 <body class="bg-gradient-to-r from-blue-100 to-purple-100 dark:from-gray-900 dark:to-black min-h-screen flex items-center justify-center text-gray-900 dark:text-white transition-all duration-300">
 
-  <canvas id="confetti-canvas"></canvas>
+  <canvas id="confetti-canvas" class="fixed top-0 left-0 w-full h-full pointer-events-none z-50"></canvas>
 
   <div class="max-w-xl bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
     <h1 class="text-3xl font-bold mb-4">Thank You for Signing Up</h1>
@@ -55,21 +42,25 @@
   </div>
 
   <script>
-    // Dark mode toggle (optional)
     document.getElementById("year").textContent = new Date().getFullYear();
 
-    // Trigger subtle confetti
     const confettiCanvas = document.getElementById('confetti-canvas');
     const myConfetti = confetti.create(confettiCanvas, {
       resize: true,
       useWorker: true
     });
 
-    myConfetti({
-      particleCount: 120,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
+    const burst = () => {
+      myConfetti({
+        particleCount: 120,
+        spread: 90,
+        origin: { y: Math.random() * 0.5 + 0.1 }
+      });
+    };
+
+    burst();
+    setTimeout(burst, 300);
+    setTimeout(burst, 600);
   </script>
 
 </body>
