@@ -19,7 +19,7 @@
   <!-- EmailJS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script>
-    emailjs.init("YOUR_USER_ID"); // Replace with your EmailJS public key
+    emailjs.init("NeoWvdWOFVFsHj6l1"); // Replace with your EmailJS public key
   </script>
 
   <script>
@@ -96,7 +96,7 @@
           });
 
           user.sendEmailVerification().then(() => {
-            emailjs.send("YOUR_SERVICE_ID", "template_signup_alert", {
+            emailjs.send("service_1tqzrwr", "template_signup_alert", {
               email: user.email,
               uid: user.uid
             }).then(() => {
