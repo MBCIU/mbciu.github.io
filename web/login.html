@@ -8,6 +8,7 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -86,9 +87,25 @@
       firebase.auth().signInWithEmailAndPassword(email, password)
         .then((userCredential) => {
           const user = userCredential.user;
-          window.location.href = "dashboard.html";
+
+          if (!user.emailVerified) {
+            firebase.auth().signOut();
+            alert("Please verify your email before logging in.");
+            return;
+          }
+
+          firebase.database().ref("users/" + user.uid).once("value")
+            .then(snapshot => {
+              const data = snapshot.val();
+              if (data && data.approved) {
+                window.location.href = "dashboard.html";
+              } else {
+                firebase.auth().signOut();
+                alert("Your account is awaiting admin approval.");
+              }
+            });
         })
-        .catch((error) => {
+        .catch(error => {
           alert("Login Failed: " + error.message);
         });
     }
@@ -97,9 +114,26 @@
       const provider = new firebase.auth.GoogleAuthProvider();
       firebase.auth().signInWithPopup(provider)
         .then((result) => {
-          window.location.href = "dashboard.html";
+          const user = result.user;
+
+          if (!user.emailVerified) {
+            firebase.auth().signOut();
+            alert("Please verify your email before logging in.");
+            return;
+          }
+
+          firebase.database().ref("users/" + user.uid).once("value")
+            .then(snapshot => {
+              const data = snapshot.val();
+              if (data && data.approved) {
+                window.location.href = "dashboard.html";
+              } else {
+                firebase.auth().signOut();
+                alert("Your account is awaiting admin approval.");
+              }
+            });
         })
-        .catch((error) => {
+        .catch(error => {
           alert("Google login failed: " + error.message);
         });
     }
@@ -108,9 +142,26 @@
       const provider = new firebase.auth.OAuthProvider('microsoft.com');
       firebase.auth().signInWithPopup(provider)
         .then((result) => {
-          window.location.href = "dashboard.html";
+          const user = result.user;
+
+          if (!user.emailVerified) {
+            firebase.auth().signOut();
+            alert("Please verify your email before logging in.");
+            return;
+          }
+
+          firebase.database().ref("users/" + user.uid).once("value")
+            .then(snapshot => {
+              const data = snapshot.val();
+              if (data && data.approved) {
+                window.location.href = "dashboard.html";
+              } else {
+                firebase.auth().signOut();
+                alert("Your account is awaiting admin approval.");
+              }
+            });
         })
-        .catch((error) => {
+        .catch(error => {
           alert("Microsoft login failed: " + error.message);
         });
     }
