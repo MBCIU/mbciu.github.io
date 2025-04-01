@@ -28,7 +28,7 @@
       appId: "1:406163757457:web:5317052f0c417c1e14a230"
     };
     firebase.initializeApp(firebaseConfig);
-    emailjs.init("NeoWvdWOFVFsHj6l1"); // Replace with your actual EmailJS public key
+    emailjs.init("NeoWvdWOFVFsHj6l1");
 
     if (localStorage.getItem("theme") === "dark") {
       document.documentElement.classList.add("dark");
@@ -105,21 +105,16 @@
           const uid = child.key;
           const data = child.val();
 
-          firebase.auth().getUser(uid).then((userRecord) => {
-            const emailVerified = userRecord.emailVerified;
-            const row = document.createElement("tr");
-            row.innerHTML = `
-              <td class="px-6 py-4">${data.email}</td>
-              <td class="px-6 py-4">${emailVerified ? "✅ Yes" : "❌ No"}</td>
-              <td class="px-6 py-4">${data.approved ? "✅ Yes" : "❌ No"}</td>
-              <td class="px-6 py-4">
-                ${data.approved ? "" : `<button onclick="approveUser('${uid}', '${data.email}')" class="text-sm text-green-600 hover:underline">Approve</button>`}
-              </td>
-            `;
-            userTable.appendChild(row);
-          }).catch((error) => {
-            console.error("Error fetching user record:", error);
-          });
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td class="px-6 py-4">${data.email}</td>
+            <td class="px-6 py-4">—</td>
+            <td class="px-6 py-4">${data.approved ? "✅ Yes" : "❌ No"}</td>
+            <td class="px-6 py-4">
+              ${data.approved ? "" : `<button onclick="approveUser('${uid}', '${data.email}')" class="text-sm text-green-600 hover:underline">Approve</button>`}
+            </td>
+          `;
+          userTable.appendChild(row);
         });
       });
     }
