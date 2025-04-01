@@ -131,6 +131,7 @@
           });
 
           notifyAdminAndUser(user);
+          await new Promise(resolve => setTimeout(resolve, 2000));
           firebase.auth().signOut();
           window.location.href = "signup-success.html";
         })
@@ -155,7 +156,7 @@
           });
           alert("Signup initiated for: " + user.email);
           notifyAdminAndUser(user);
-          await new Promise(resolve => setTimeout(resolve, 10000));
+          await new Promise(resolve => setTimeout(resolve, 2000));
           firebase.auth().signOut();
           window.location.href = "signup-success.html";
           
