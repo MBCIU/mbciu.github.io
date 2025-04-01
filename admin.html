@@ -27,6 +27,14 @@
       appId: "1:406163757457:web:5317052f0c417c1e14a230"
     };
     firebase.initializeApp(firebaseConfig);
+
+    firebase.auth().onAuthStateChanged((user) => {
+  if (user) {
+    console.log("Logged in as:", user.email);
+    alert("You are logged in as: " + user.email);
+  }
+});
+    
   </script>
 </head>
 
