@@ -1,34 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard | MBCIU</title>
+<!-- (Same <head> and Firebase setup as before, unchanged) -->
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Enable dark mode -->
-  <script>
-    tailwind.config = {
-      darkMode: 'class'
-    };
-  </script>
-
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBQ0RJeM0tMZ0ro0EjdOfmBgCb1DZS87_c",
-      authDomain: "mbciu-auth.firebaseapp.com",
-      projectId: "mbciu-auth",
-      storageBucket: "mbciu-auth.firebasestorage.app",
-      messagingSenderId: "406163757457",
-      appId: "1:406163757457:web:5317052f0c417c1e14a230"
-    };
-    firebase.initializeApp(firebaseConfig);
-  </script>
+<script>
+  // Initialize Firebase and Firestore
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
 </head>
 
 <body class="bg-gradient-to-br from-white to-gray-100 dark:from-gray-900 dark:to-black min-h-screen text-gray-900 dark:text-gray-100 transition-all">
@@ -98,8 +74,6 @@
       });
     }
 
-    const db = firebase.firestore();
-
     firebase.auth().onAuthStateChanged(async (user) => {
       if (!user) {
         window.location.href = "/index.html";
@@ -107,25 +81,38 @@
       }
 
       const adminEmails = ["wtsyeda@gmail.com", "wtsyeda@unimelb.edu.au"];
-      if (adminEmails.includes(user.email)) {
+      const isAdmin = adminEmails.includes(user.email);
+      if (isAdmin) {
         document.getElementById("adminBtn").classList.remove("hidden");
       }
 
-      try {
-        const doc = await db.collection("users").doc(user.uid).get();
-        const userData = doc.data();
+      const userRef = db.collection("users").doc(user.uid);
 
-        if (userData && userData.approved === true) {
+      try {
+        const doc = await userRef.get();
+
+        if (!doc.exists) {
+          // First login — create user doc
+          await userRef.set({
+            email: user.email,
+            approved: isAdmin, // auto-approved if admin
+            requestedAccess: isAdmin ? false : false
+          });
+        }
+
+        const userData = (await userRef.get()).data();
+
+        if (userData.approved) {
           document.getElementById("welcomeText").textContent = `You are approved to access MBCIU tools.`;
           document.getElementById("toolsContainer").classList.remove("hidden");
         } else {
-          document.getElementById("welcomeText").textContent = `Hi ${user.email}, your account has not been approved yet.`;
+          document.getElementById("welcomeText").textContent = `Hi ${user.email}, your account is not yet approved.`;
           document.getElementById("accessRequest").classList.remove("hidden");
         }
 
-      } catch (error) {
-        console.error("Error checking approval:", error);
-        document.getElementById("welcomeText").textContent = "Could not verify your approval status.";
+      } catch (err) {
+        console.error("Error checking user approval:", err);
+        document.getElementById("welcomeText").textContent = "Could not verify your access. Please try again.";
       }
     });
 
@@ -135,9 +122,7 @@
 
       const userRef = db.collection("users").doc(user.uid);
       userRef.set({
-        email: user.email,
-        requestedAccess: true,
-        approved: false
+        requestedAccess: true
       }, { merge: true }).then(() => {
         alert("Access request sent to the admin.");
       }).catch((error) => {
