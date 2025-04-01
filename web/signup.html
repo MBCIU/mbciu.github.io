@@ -143,6 +143,7 @@
       const provider = new firebase.auth.OAuthProvider('microsoft.com');
       firebase.auth().signInWithPopup(provider)
         .then(async (result) => {
+          await new Promise(resolve => setTimeout(resolve, 5000));
           const user = result.user;
           if (!user || !user.email) {
             alert("Something went wrong. Could not retrieve user information.");
