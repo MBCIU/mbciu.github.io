@@ -45,17 +45,18 @@
     <!-- Login Card -->
     <div class="bg-white dark:bg-gray-800 shadow-xl rounded-xl p-6">
       <div class="space-y-4">
-        <input id="email" type="email" placeholder="Email"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input id="password" type="password" placeholder="Password"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input id="email" type="email" placeholder="Email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input id="password" type="password" placeholder="Password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
 
-        <button onclick="login()"
-          class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">Log In</button>
+        <button onclick="login()" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">Log In</button>
+
+        <div class="border-t pt-4 text-center text-sm text-gray-500 dark:text-gray-400">or log in with</div>
+
+        <button onclick="loginWithGoogle()" class="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition">Continue with Google</button>
+        <button onclick="loginWithMicrosoft()" class="w-full bg-gray-800 text-white py-2 rounded-lg hover:bg-gray-900 transition">Continue with Microsoft</button>
 
         <p class="text-sm text-center text-gray-600 dark:text-gray-400">
-          Don't have an account?
-          <a href="signup.html" class="text-blue-600 dark:text-blue-400 hover:underline">Sign Up</a>
+          Don't have an account? <a href="signup.html" class="text-blue-600 dark:text-blue-400 hover:underline">Sign Up</a>
         </p>
       </div>
     </div>
@@ -89,6 +90,28 @@
         })
         .catch((error) => {
           alert("Login Failed: " + error.message);
+        });
+    }
+
+    function loginWithGoogle() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      firebase.auth().signInWithPopup(provider)
+        .then((result) => {
+          window.location.href = "dashboard.html";
+        })
+        .catch((error) => {
+          alert("Google login failed: " + error.message);
+        });
+    }
+
+    function loginWithMicrosoft() {
+      const provider = new firebase.auth.OAuthProvider('microsoft.com');
+      firebase.auth().signInWithPopup(provider)
+        .then((result) => {
+          window.location.href = "dashboard.html";
+        })
+        .catch((error) => {
+          alert("Microsoft login failed: " + error.message);
         });
     }
 
