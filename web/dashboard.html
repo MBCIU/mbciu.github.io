@@ -5,16 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dashboard | MBCIU</title>
 
-  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 
   <script>
-    tailwind.config = {
-      darkMode: 'class',
-    };
+    tailwind.config = { darkMode: 'class' };
   </script>
 
   <script>
@@ -29,12 +26,8 @@
     firebase.initializeApp(firebaseConfig);
   </script>
 </head>
-
 <body class="bg-gradient-to-br from-white to-gray-100 dark:from-gray-900 dark:to-black min-h-screen text-gray-900 dark:text-gray-100 font-sans transition-all">
-
   <div class="max-w-6xl mx-auto px-6 py-10">
-
-    <!-- Header -->
     <div class="flex justify-between items-center mb-10">
       <div class="flex items-center gap-3">
         <img src="logo.png" alt="MBCIU Logo" class="h-12 w-12 rounded-full shadow-md" onerror="this.style.display='none';"/>
@@ -47,52 +40,40 @@
       </div>
     </div>
 
-    <!-- Welcome -->
     <div class="mb-8">
       <h2 class="text-2xl font-semibold mb-2">Welcome to MBCIU Tools</h2>
       <p id="welcomeText" class="text-gray-600 dark:text-gray-300">Checking your access...</p>
     </div>
 
-    <!-- Tool Grid -->
     <div id="toolsContainer" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Tool 1 -->
-      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden transform transition hover:scale-105">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden">
         <img src="https://picsum.photos/seed/tool1/400/200" alt="Tool 1" class="w-full h-40 object-cover">
         <div class="p-5">
           <h3 class="text-xl font-semibold mb-2">NeuroData Visualizer</h3>
           <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Explore interactive brain maps and group insights.</p>
-          <button id="tool1Btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Launch Tool</button>
+          <div id="tool1-access"></div>
         </div>
       </div>
 
-      <!-- Tool 2 -->
-      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden transform transition hover:scale-105">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden">
         <img src="https://picsum.photos/seed/tool2/400/200" alt="Tool 2" class="w-full h-40 object-cover">
         <div class="p-5">
           <h3 class="text-xl font-semibold mb-2">Affinity Score Checker</h3>
           <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Personalized scores for mental health care planning.</p>
-          <button id="tool2Btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Launch Tool</button>
+          <div id="tool2-access"></div>
         </div>
       </div>
 
-      <!-- Tool 3 -->
-      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden transform transition hover:scale-105">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden">
         <img src="https://picsum.photos/seed/tool3/400/200" alt="Tool 3" class="w-full h-40 object-cover">
         <div class="p-5">
           <h3 class="text-xl font-semibold mb-2">Cognition Tracker</h3>
           <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Track cognitive changes over time with structured reports.</p>
-          <button id="tool3Btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Launch Tool</button>
+          <div id="tool3-access"></div>
         </div>
       </div>
     </div>
 
-    <!-- Request Access -->
-    <div id="accessRequest" class="hidden mt-10 text-center">
-      <p class="text-red-500 text-lg font-medium mb-4">You don’t currently have access to the tools.</p>
-      <button onclick="requestAccess()" class="bg-yellow-500 text-white px-5 py-2 rounded hover:bg-yellow-600">Request Access</button>
-    </div>
-
-    <!-- Footer -->
     <footer class="mt-16 text-center text-sm text-gray-500 dark:text-gray-400">
       &copy; <span id="year"></span> Warda Syeda | MBCIU
     </footer>
@@ -119,67 +100,65 @@
     let isApprovedUser = false;
 
     firebase.auth().onAuthStateChanged(async (user) => {
-      if (!user) {
-        window.location.href = "/index.html";
-        return;
-      }
+      if (!user) return (window.location.href = "/index.html");
 
       const adminEmails = ["wtsyeda@gmail.com", "wtsyeda@unimelb.edu.au"];
       const isAdmin = adminEmails.includes(user.email);
-
-      if (isAdmin) {
-        document.getElementById("adminBtn").classList.remove("hidden");
-      }
+      if (isAdmin) document.getElementById("adminBtn").classList.remove("hidden");
 
       const userRef = db.collection("users").doc(user.uid);
       const doc = await userRef.get();
-
       if (!doc.exists) {
-        await userRef.set({
-          email: user.email,
-          approved: isAdmin,
-          requestedAccess: isAdmin ? false : false
-        });
+        await userRef.set({ email: user.email, approved: isAdmin, requestedAccess: false });
       }
 
       const userData = (await userRef.get()).data();
       isApprovedUser = userData.approved;
+      const requestedAccess = userData.requestedAccess;
 
-      if (isApprovedUser) {
-        document.getElementById("welcomeText").textContent = `You are approved to access MBCIU tools.`;
-      } else {
-        document.getElementById("welcomeText").textContent = `Hi ${user.email}, your account is not yet approved.`;
-        document.getElementById("accessRequest").classList.remove("hidden");
-      }
-    });
+      document.getElementById("welcomeText").textContent = isApprovedUser
+        ? `You are approved to access MBCIU tools.`
+        : `Hi ${user.email}, your account is not yet approved.`;
 
-    function requestAccess() {
-      const user = firebase.auth().currentUser;
-      if (!user) return;
+      const tools = [
+        { id: "tool1", link: "tool1.html" },
+        { id: "tool2", link: "tool2.html" },
+        { id: "tool3", link: "tool3.html" },
+      ];
 
-      const userRef = db.collection("users").doc(user.uid);
-      userRef.set({ requestedAccess: true }, { merge: true }).then(() => {
-        alert("Access request sent to the admin.");
-      }).catch((error) => {
-        console.error("Error requesting access:", error);
-      });
-    }
+      tools.forEach(tool => {
+        const container = document.getElementById(`${tool.id}-access`);
+        container.innerHTML = "";
 
-    document.addEventListener("DOMContentLoaded", () => {
-      ["tool1Btn", "tool2Btn", "tool3Btn"].forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn) {
-          btn.addEventListener("click", () => {
-            if (!isApprovedUser) {
-              alert("Access restricted. Please request access and wait for admin approval.");
-            } else {
-              const toolPage = id.replace("Btn", "") + ".html"; // e.g., tool1.html
-              window.location.href = toolPage;
-            }
-          });
+        if (isApprovedUser) {
+          const btn = document.createElement("button");
+          btn.className = "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700";
+          btn.textContent = "Launch Tool";
+          btn.onclick = () => window.location.href = tool.link;
+          container.appendChild(btn);
+        } else if (requestedAccess) {
+          const banner = document.createElement("div");
+          banner.className = "bg-yellow-100 text-yellow-800 px-3 py-2 text-sm rounded shadow";
+          banner.innerHTML = "Access request pending ⏳";
+          container.appendChild(banner);
+        } else {
+          const requestBtn = document.createElement("button");
+          requestBtn.className = "bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600";
+          requestBtn.textContent = "Request Access";
+          requestBtn.onclick = () => {
+            db.collection("users").doc(user.uid).set({ requestedAccess: true }, { merge: true })
+              .then(() => {
+                alert("Access request sent. Please wait for admin approval.");
+                location.reload();
+              })
+              .catch(err => console.error("Error requesting access:", err));
+          };
+          container.appendChild(requestBtn);
         }
       });
+    });
 
+    document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("year").textContent = new Date().getFullYear();
     });
   </script>
