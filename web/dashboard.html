@@ -60,13 +60,13 @@
   <script>
     // Dark mode toggle
     function toggleDarkMode() {
-      document.documentElement.classList.toggle('dark');
+      document.documentElement.classList.toggle('light');
     }
 
     // Logout
     function logout() {
       firebase.auth().signOut().then(() => {
-        window.location.href = "index.html";
+        window.location.href = "../index.html";
       });
     }
 
