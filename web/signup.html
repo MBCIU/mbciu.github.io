@@ -16,6 +16,12 @@
     tailwind.config = { darkMode: 'class' };
   </script>
 
+  <!-- EmailJS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script>
+    emailjs.init("YOUR_USER_ID"); // Replace with your EmailJS public key
+  </script>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBQ0RJeM0tMZ0ro0EjdOfmBgCb1DZS87_c",
@@ -36,30 +42,22 @@
 <body class="bg-gradient-to-r from-blue-100 to-purple-100 dark:from-gray-900 dark:to-black min-h-screen text-gray-900 dark:text-white">
 
   <div class="max-w-md mx-auto mt-12 px-4">
-    <!-- Header -->
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold">Sign Up for MBCIU</h1>
       <button onclick="toggleDarkMode()" class="text-sm hover:underline">🌓 Toggle Mode</button>
     </div>
 
-    <!-- Signup Card -->
     <div class="bg-white dark:bg-gray-800 shadow-xl rounded-xl p-6">
       <div class="space-y-4">
-        <input id="email" type="email" placeholder="Email"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input id="password" type="password" placeholder="Password"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input id="email" type="email" placeholder="Email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input id="password" type="password" placeholder="Password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
 
-        <button onclick="signupWithEmail()"
-          class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">Sign Up with Email</button>
+        <button onclick="signupWithEmail()" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">Sign Up with Email</button>
 
         <div class="border-t pt-4 text-center text-sm text-gray-500 dark:text-gray-400">or sign up with</div>
 
-        <button onclick="signupWithGoogle()"
-          class="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition">Continue with Google</button>
-
-        <button onclick="signupWithMicrosoft()"
-          class="w-full bg-gray-800 text-white py-2 rounded-lg hover:bg-gray-900 transition">Continue with Microsoft</button>
+        <button onclick="signupWithGoogle()" class="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition">Continue with Google</button>
+        <button onclick="signupWithMicrosoft()" class="w-full bg-gray-800 text-white py-2 rounded-lg hover:bg-gray-900 transition">Continue with Microsoft</button>
 
         <p class="text-sm text-center text-gray-600 dark:text-gray-400">
           Already have an account? <a href="login.html" class="text-blue-600 dark:text-blue-400 hover:underline">Log In</a>
@@ -67,7 +65,6 @@
       </div>
     </div>
 
-    <!-- Footer -->
     <footer class="text-center mt-8 text-sm text-gray-600 dark:text-gray-400">
       &copy; <span id="year"></span> Warda Syeda | MBCIU
     </footer>
@@ -99,6 +96,15 @@
           });
 
           user.sendEmailVerification().then(() => {
+            emailjs.send("YOUR_SERVICE_ID", "template_signup_alert", {
+              email: user.email,
+              uid: user.uid
+            }).then(() => {
+              console.log("Admin notified");
+            }).catch((error) => {
+              console.error("EmailJS failed:", error);
+            });
+
             firebase.auth().signOut();
             window.location.href = "signup-success.html";
           });
