@@ -155,7 +155,14 @@
             approved: false
           });
 
-          notifyAdminAndUser(user);
+          emailjs.send("service_1tqzrwr", "template_user_approved", {
+          email: user.email
+        }).then(() => {
+          console.log("Signup email sent to user.");
+        }).catch((error) => {
+          console.error("EmailJS error:", error);
+        });
+          
           firebase.auth().signOut();
           window.location.href = "signup-success.html";
         })
