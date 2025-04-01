@@ -154,7 +154,7 @@
             email: user.email,
             approved: false
           });
-          alert("Signup initiated for: " + user.email);
+          
           notifyAdminAndUser(user);
           await new Promise(resolve => setTimeout(resolve, 2000));
           firebase.auth().signOut();
