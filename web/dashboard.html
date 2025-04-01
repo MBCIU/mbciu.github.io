@@ -54,7 +54,6 @@
           <div id="tool1-access"></div>
         </div>
       </div>
-
       <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden">
         <img src="https://picsum.photos/seed/tool2/400/200" alt="Tool 2" class="w-full h-40 object-cover">
         <div class="p-5">
@@ -63,7 +62,6 @@
           <div id="tool2-access"></div>
         </div>
       </div>
-
       <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden">
         <img src="https://picsum.photos/seed/tool3/400/200" alt="Tool 3" class="w-full h-40 object-cover">
         <div class="p-5">
@@ -96,9 +94,6 @@
       });
     }
 
-    const db = firebase.firestore();
-    let isApprovedUser = false;
-
     firebase.auth().onAuthStateChanged(async (user) => {
       if (!user) return (window.location.href = "/index.html");
 
@@ -106,23 +101,8 @@
       const isAdmin = adminEmails.includes(user.email);
       if (isAdmin) document.getElementById("adminBtn").classList.remove("hidden");
 
-      const userRef = db.collection("users").doc(user.uid);
-      let userData;
-
-      try {
-        const doc = await userRef.get();
-        if (!doc.exists) {
-          await userRef.set({ email: user.email, approved: isAdmin, requestedAccess: false });
-        }
-        userData = (await userRef.get()).data();
-      } catch (err) {
-        console.error("Error loading user data:", err);
-        document.getElementById("welcomeText").textContent = "Error loading user data.";
-        return;
-      }
-
-      isApprovedUser = userData.approved;
-      const requestedAccess = userData.requestedAccess;
+      const isApprovedUser = isAdmin;
+      const requestedAccess = false; // no check anymore
 
       document.getElementById("welcomeText").textContent = isApprovedUser
         ? `You are approved to access MBCIU tools.`
@@ -140,8 +120,6 @@
 
         if (isApprovedUser) {
           container.innerHTML = `<button class='bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700' onclick="window.location.href='${tool.link}'">Launch Tool</button>`;
-        } else if (requestedAccess) {
-          container.innerHTML = `<div class='bg-yellow-100 text-yellow-800 px-3 py-2 text-sm rounded shadow'>Access request pending ⏳</div>`;
         } else {
           container.innerHTML = `<button class='bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600' onclick='requestAccess()'>Request Access</button>`;
         }
@@ -152,7 +130,7 @@
       const user = firebase.auth().currentUser;
       if (!user) return;
 
-      db.collection("users").doc(user.uid).set({ requestedAccess: true }, { merge: true })
+      firebase.firestore().collection("users").doc(user.uid).set({ requestedAccess: true }, { merge: true })
         .then(() => {
           alert("Access request sent. Please wait for admin approval.");
           location.reload();
