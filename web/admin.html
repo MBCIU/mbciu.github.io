@@ -81,13 +81,13 @@
 
     function logout() {
       firebase.auth().signOut().then(() => {
-        window.location.href = "index.html";
+        window.location.href = "../index.html";
       });
     }
 
     firebase.auth().onAuthStateChanged((user) => {
       if (!user) {
-        window.location.href = "index.html";
+        window.location.href = "../index.html";
         return;
       }
 
@@ -95,7 +95,7 @@
       const adminEmails = ["wtsyeda@gmail.com", "wtsyeda@unimelb.edu.au"];
       if (!adminEmails.includes(user.email)) {
         alert("Access denied: You are not an admin.");
-        window.location.href = "dashboard.html";
+        window.location.href = "web/dashboard.html";
         return;
       }
 
