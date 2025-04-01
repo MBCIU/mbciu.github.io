@@ -19,7 +19,7 @@
   <!-- EmailJS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script>
-    emailjs.init("NeoWvdWOFVFsHj6l1"); // Replace with your EmailJS public key
+    emailjs.init("NeoWvdWOFVFsHj6l1");
   </script>
 
   <script>
@@ -38,9 +38,7 @@
     }
   </script>
 </head>
-
 <body class="bg-gradient-to-r from-blue-100 to-purple-100 dark:from-gray-900 dark:to-black min-h-screen text-gray-900 dark:text-white">
-
   <div class="max-w-md mx-auto mt-12 px-4">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold">Sign Up for MBCIU</h1>
@@ -114,21 +112,26 @@
         });
     }
 
-    function ensureUserInDB(user) {
-      const userRef = firebase.database().ref("users/" + user.uid);
-      userRef.once("value").then((snapshot) => {
-        if (!snapshot.exists()) {
-          userRef.set({ email: user.email, approved: false });
-        }
-      });
-    }
-
     function signupWithGoogle() {
       const provider = new firebase.auth.GoogleAuthProvider();
       firebase.auth().signInWithPopup(provider)
         .then((result) => {
           const user = result.user;
-          ensureUserInDB(user);
+
+          firebase.database().ref("users/" + user.uid).set({
+            email: user.email,
+            approved: false
+          });
+
+          emailjs.send("service_1tqzrwr", "template_signup_alert", {
+            email: user.email,
+            uid: user.uid
+          }).then(() => {
+            console.log("Admin notified");
+          }).catch((error) => {
+            console.error("EmailJS failed:", error);
+          });
+
           firebase.auth().signOut();
           window.location.href = "signup-success.html";
         })
@@ -142,7 +145,21 @@
       firebase.auth().signInWithPopup(provider)
         .then((result) => {
           const user = result.user;
-          ensureUserInDB(user);
+
+          firebase.database().ref("users/" + user.uid).set({
+            email: user.email,
+            approved: false
+          });
+
+          emailjs.send("service_1tqzrwr", "template_signup_alert", {
+            email: user.email,
+            uid: user.uid
+          }).then(() => {
+            console.log("Admin notified");
+          }).catch((error) => {
+            console.error("EmailJS failed:", error);
+          });
+
           firebase.auth().signOut();
           window.location.href = "signup-success.html";
         })
@@ -153,6 +170,5 @@
 
     document.getElementById("year").textContent = new Date().getFullYear();
   </script>
-
 </body>
 </html>
