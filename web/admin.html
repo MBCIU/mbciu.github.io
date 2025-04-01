@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel | MBCIU</title>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    };
+  </script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQ0RJeM0tMZ0ro0EjdOfmBgCb1DZS87_c",
+      authDomain: "mbciu-auth.firebaseapp.com",
+      projectId: "mbciu-auth",
+      storageBucket: "mbciu-auth.firebasestorage.app",
+      messagingSenderId: "406163757457",
+      appId: "1:406163757457:web:5317052f0c417c1e14a230"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+</head>
+
+<body class="bg-gradient-to-br from-white to-gray-100 dark:from-gray-900 dark:to-black min-h-screen text-gray-900 dark:text-gray-100">
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-2xl font-bold">Admin Panel</h1>
+      <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Logout</button>
+    </div>
+
+    <!-- User Requests Table -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+      <h2 class="text-xl font-semibold mb-4">Pending Access Requests</h2>
+      <div id="userList" class="space-y-4">
+        <p>Loading users...</p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-10 text-center text-sm text-gray-500 dark:text-gray-400">
+      &copy; <span id="year"></span> Warda Syeda | MBCIU
+    </footer>
+  </div>
+
+  <script>
+    const db = firebase.firestore();
+
+    function logout() {
+      firebase.auth().signOut().then(() => {
+        window.location.href = "/index.html";
+      });
+    }
+
+    firebase.auth().onAuthStateChanged(async (user) => {
+      if (!user) {
+        window.location.href = "/index.html";
+        return;
+      }
+
+      const adminEmails = ["wtsyeda@gmail.com", "wtsyeda@unimelb.edu.au"];
+      if (!adminEmails.includes(user.email)) {
+        alert("Access denied: You are not an admin.");
+        window.location.href = "/dashboard.html";
+        return;
+      }
+
+      loadUserRequests();
+    });
+
+    function loadUserRequests() {
+      const container = document.getElementById("userList");
+      container.innerHTML = "";
+
+      db.collection("users").where("requestedAccess", "==", true).get().then((querySnapshot) => {
+        if (querySnapshot.empty) {
+          container.innerHTML = "<p>No pending requests.</p>";
+          return;
+        }
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const userId = doc.id;
+          const approved = data.approved === true;
+          const div = document.createElement("div");
+
+          div.className = "flex justify-between items-center border-b pb-2 dark:border-gray-700";
+          div.innerHTML = `
+            <div>
+              <p class="font-medium">${data.email}</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">${approved ? "✅ Approved" : "⏳ Pending Approval"}</p>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="approveUser('${userId}')" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">Approve</button>
+              <button onclick="disapproveUser('${userId}')" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Disapprove</button>
+            </div>
+          `;
+
+          container.appendChild(div);
+        });
+      }).catch((error) => {
+        console.error("Error loading users:", error);
+        container.innerHTML = "<p>Error loading users.</p>";
+      });
+    }
+
+    function approveUser(uid) {
+      db.collection("users").doc(uid).update({
+        approved: true,
+        requestedAccess: false
+      }).then(() => {
+        alert("User approved.");
+        loadUserRequests();
+      }).catch((error) => {
+        console.error("Error approving user:", error);
+      });
+    }
+
+    function disapproveUser(uid) {
+      db.collection("users").doc(uid).update({
+        approved: false,
+        requestedAccess: false
+      }).then(() => {
+        alert("User disapproved.");
+        loadUserRequests();
+      }).catch((error) => {
+        console.error("Error disapproving user:", error);
+      });
+    }
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
