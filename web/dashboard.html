@@ -101,8 +101,12 @@
       const isAdmin = adminEmails.includes(user.email);
       if (isAdmin) document.getElementById("adminBtn").classList.remove("hidden");
 
-      const isApprovedUser = isAdmin;
-      const requestedAccess = false; // no check anymore
+      const userRef = firebase.firestore().collection("users").doc(user.uid);
+      const doc = await userRef.get();
+      const data = doc.exists ? doc.data() : {};
+
+      const isApprovedUser = isAdmin || data.approved === true;
+      const requestedAccess = data.requestedAccess === true;
 
       document.getElementById("welcomeText").textContent = isApprovedUser
         ? `You are approved to access MBCIU tools.`
@@ -120,6 +124,8 @@
 
         if (isApprovedUser) {
           container.innerHTML = `<button class='bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700' onclick="window.location.href='${tool.link}'">Launch Tool</button>`;
+        } else if (requestedAccess) {
+          container.innerHTML = `<div class='bg-yellow-100 text-yellow-800 px-3 py-2 text-sm rounded shadow'>Access request pending ⏳</div>`;
         } else {
           container.innerHTML = `<button class='bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600' onclick='requestAccess()'>Request Access</button>`;
         }
