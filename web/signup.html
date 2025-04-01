@@ -76,15 +76,26 @@
     }
 
     function notifyAdminAndUser(user) {
-      if (!user || !user.email || !user.uid) return;
-      emailjs.send("service_1tqzrwr", "template_signup_alert", {
-        email: user.email,
-        uid: user.uid
-      });
-      emailjs.send("service_1tqzrwr", "template_user_confirmation", {
-        email: user.email
-      });
-    }
+  if (!user || !user.email || !user.uid) return;
+
+  emailjs.send("service_1tqzrwr", "template_signup_alert", {
+    email: user.email,
+    uid: user.uid
+  }).then(() => {
+    console.log("✅ Admin notified of signup.");
+  }).catch((error) => {
+    console.error("❌ Failed to notify admin:", error);
+  });
+
+  emailjs.send("service_1tqzrwr", "template_user_confirmation", {
+    email: user.email
+  }).then(() => {
+    console.log("✅ User notified of signup.");
+  }).catch((error) => {
+    console.error("❌ Failed to notify user:", error);
+  });
+}
+
 
     function signupWithEmail() {
       const email = document.getElementById("email").value;
