@@ -97,7 +97,8 @@
 
       firebase.auth().fetchSignInMethodsForEmail(email).then((methods) => {
         if (methods.length > 0) {
-          alert("An account with this email already exists. Please log in instead.");
+            alert("An account with this email already exists. Redirecting to login...");
+            window.location.href = "web/login.html";
         } else {
           firebase.auth().createUserWithEmailAndPassword(email, password)
             .then((userCredential) => {
@@ -135,8 +136,9 @@
 
           firebase.database().ref("users/" + user.uid).once("value", (snapshot) => {
             if (snapshot.exists()) {
-              alert("An account with this email already exists. Please log in instead.");
+              alert("An account with this email already exists. Redirecting to login...");
               firebase.auth().signOut();
+              window.location.href = "web/login.html";
               return;
             } else {
               firebase.database().ref("users/" + user.uid).set({
@@ -168,8 +170,9 @@
 
           firebase.database().ref("users/" + user.uid).once("value", (snapshot) => {
             if (snapshot.exists()) {
-              alert("An account with this email already exists. Please log in instead.");
+              alert("An account with this email already exists. Redirecting to login...");
               firebase.auth().signOut();
+              window.location.href = "web/login.html";
               return;
             } else {
               firebase.database().ref("users/" + user.uid).set({
