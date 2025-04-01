@@ -107,12 +107,20 @@
       if (isAdmin) document.getElementById("adminBtn").classList.remove("hidden");
 
       const userRef = db.collection("users").doc(user.uid);
-      const doc = await userRef.get();
-      if (!doc.exists) {
-        await userRef.set({ email: user.email, approved: isAdmin, requestedAccess: false });
+      let userData;
+
+      try {
+        const doc = await userRef.get();
+        if (!doc.exists) {
+          await userRef.set({ email: user.email, approved: isAdmin, requestedAccess: false });
+        }
+        userData = (await userRef.get()).data();
+      } catch (err) {
+        console.error("Error loading user data:", err);
+        document.getElementById("welcomeText").textContent = "Error loading user data.";
+        return;
       }
 
-      const userData = (await userRef.get()).data();
       isApprovedUser = userData.approved;
       const requestedAccess = userData.requestedAccess;
 
@@ -131,32 +139,26 @@
         container.innerHTML = "";
 
         if (isApprovedUser) {
-          const btn = document.createElement("button");
-          btn.className = "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700";
-          btn.textContent = "Launch Tool";
-          btn.onclick = () => window.location.href = tool.link;
-          container.appendChild(btn);
+          container.innerHTML = `<button class='bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700' onclick="window.location.href='${tool.link}'">Launch Tool</button>`;
         } else if (requestedAccess) {
-          const banner = document.createElement("div");
-          banner.className = "bg-yellow-100 text-yellow-800 px-3 py-2 text-sm rounded shadow";
-          banner.innerHTML = "Access request pending ⏳";
-          container.appendChild(banner);
+          container.innerHTML = `<div class='bg-yellow-100 text-yellow-800 px-3 py-2 text-sm rounded shadow'>Access request pending ⏳</div>`;
         } else {
-          const requestBtn = document.createElement("button");
-          requestBtn.className = "bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600";
-          requestBtn.textContent = "Request Access";
-          requestBtn.onclick = () => {
-            db.collection("users").doc(user.uid).set({ requestedAccess: true }, { merge: true })
-              .then(() => {
-                alert("Access request sent. Please wait for admin approval.");
-                location.reload();
-              })
-              .catch(err => console.error("Error requesting access:", err));
-          };
-          container.appendChild(requestBtn);
+          container.innerHTML = `<button class='bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600' onclick='requestAccess()'>Request Access</button>`;
         }
       });
     });
+
+    function requestAccess() {
+      const user = firebase.auth().currentUser;
+      if (!user) return;
+
+      db.collection("users").doc(user.uid).set({ requestedAccess: true }, { merge: true })
+        .then(() => {
+          alert("Access request sent. Please wait for admin approval.");
+          location.reload();
+        })
+        .catch((err) => console.error("Error requesting access:", err));
+    }
 
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("year").textContent = new Date().getFullYear();
