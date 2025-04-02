@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel | MBCIU</title>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen py-10 px-6">
+  <div class="max-w-5xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-3xl font-bold">Tool Access Approvals</h1>
+      <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Logout</button>
+    </div>
+    <div id="requests" class="space-y-6"></div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQ0RJeM0tMZ0ro0EjdOfmBgCb1DZS87_c",
+      authDomain: "mbciu-auth.firebaseapp.com",
+      projectId: "mbciu-auth",
+      storageBucket: "mbciu-auth.firebasestorage.app",
+      messagingSenderId: "406163757457",
+      appId: "1:406163757457:web:5317052f0c417c1e14a230"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const tools = [
+      { id: "tool1", name: "NeuroData Visualizer" },
+      { id: "tool2", name: "Affinity Score Checker" },
+      { id: "tool3", name: "Cognition Tracker" },
+    ];
+
+    firebase.auth().onAuthStateChanged(async (user) => {
+      if (!user || !["wtsyeda@gmail.com", "wtsyeda@unimelb.edu.au"].includes(user.email)) {
+        alert("Access denied.");
+        return window.location.href = "/index.html";
+      }
+      listenToRequests();
+    });
+
+    function logout() {
+      firebase.auth().signOut().then(() => location.href = "/index.html");
+    }
+
+    function listenToRequests() {
+      db.collection("users").onSnapshot(snapshot => {
+        const container = document.getElementById("requests");
+        container.innerHTML = "";
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const uid = doc.id;
+
+          const requestedTools = tools.filter(t => data[t.id]?.requested === true);
+          if (requestedTools.length === 0) return;
+
+          const div = document.createElement("div");
+          div.className = "bg-white dark:bg-gray-800 p-6 rounded-xl shadow";
+
+          let html = `<h2 class="text-xl font-semibold mb-2">${data.email}</h2>`;
+          html += `<ul class="space-y-2">`;
+          requestedTools.forEach(tool => {
+            const timestamp = data[t.id]?.timestamp?.toDate?.().toLocaleString?.() || '—';
+            html += `
+              <li class="flex items-center justify-between">
+                <div>
+                  <span class="font-medium">${tool.name}</span>
+                  <p class="text-sm text-gray-500">Requested: ${timestamp}</p>
+                </div>
+                <div class="space-x-2">
+                  <button class="bg-green-600 px-3 py-1 text-white rounded hover:bg-green-700" onclick="approve('${uid}', '${tool.id}')">Approve</button>
+                  <button class="bg-gray-400 px-3 py-1 text-white rounded hover:bg-gray-500" onclick="disapprove('${uid}', '${tool.id}')">Deny</button>
+                </div>
+              </li>`;
+          });
+          html += `</ul>`;
+
+          div.innerHTML = html;
+          container.appendChild(div);
+        });
+      });
+    }
+
+    function approve(uid, toolId) {
+      const update = {};
+      update[`${toolId}`] = { approved: true, requested: false };
+      db.collection("users").doc(uid).set(update, { merge: true });
+    }
+
+    function disapprove(uid, toolId) {
+      const update = {};
+      update[`${toolId}`] = { approved: false, requested: false };
+      db.collection("users").doc(uid).set(update, { merge: true });
+    }
+  </script>
+</body>
+</html>
