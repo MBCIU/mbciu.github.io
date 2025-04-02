@@ -102,15 +102,26 @@
       if (isAdmin) document.getElementById("adminBtn").classList.remove("hidden");
 
       const userRef = firebase.firestore().collection("users").doc(user.uid);
-      const doc = await userRef.get();
-      const data = doc.exists ? doc.data() : {};
 
-      const isApprovedUser = isAdmin || data.approved === true;
-      const requestedAccess = data.requestedAccess === true;
+      let isApprovedUser = false;
+      let requestedAccess = false;
 
-      document.getElementById("welcomeText").textContent = isApprovedUser
-        ? `You are approved to access MBCIU tools.`
-        : `Hi ${user.email}, your account is not yet approved.`;
+      try {
+        const doc = await userRef.get();
+        const data = doc.exists ? doc.data() : {};
+        isApprovedUser = isAdmin || data.approved === true;
+        requestedAccess = data.requestedAccess === true;
+      } catch (err) {
+        console.error("Firestore access error:", err);
+        document.getElementById("welcomeText").textContent = "Could not load user access data.";
+        requestedAccess = false; // fallback
+      }
+
+      if (isApprovedUser) {
+        document.getElementById("welcomeText").textContent = "You are approved to access MBCIU tools.";
+      } else {
+        document.getElementById("welcomeText").textContent = `Hi ${user.email}, your account is not yet approved.`;
+      }
 
       const tools = [
         { id: "tool1", link: "tool1.html" },
