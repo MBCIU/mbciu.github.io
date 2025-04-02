@@ -36,6 +36,7 @@
       <div class="flex gap-4">
         <button onclick="toggleDarkMode()" class="text-sm text-blue-500 hover:underline">🌓 Toggle Dark Mode</button>
         <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">Logout</button>
+        <a href="admin.html" id="adminBtn" class="hidden bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition">Admin Panel</a>
       </div>
     </div>
 
@@ -76,6 +77,11 @@
 
     firebase.auth().onAuthStateChanged(async (user) => {
       if (!user) return (window.location.href = "/index.html");
+
+      const adminEmails = ["wtsyeda@gmail.com", "wtsyeda@unimelb.edu.au"];
+      if (adminEmails.includes(user.email)) {
+        document.getElementById("adminBtn").classList.remove("hidden");
+      }
 
       const userRef = firebase.firestore().collection("users").doc(user.uid);
       let userData = {};
@@ -123,7 +129,10 @@
       if (!user) return;
 
       const toolUpdate = {};
-      toolUpdate[`${toolId}.requested`] = true;
+      toolUpdate[`${toolId}`] = {
+        requested: true,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      };
 
       firebase.firestore().collection("users").doc(user.uid).set(toolUpdate, { merge: true })
         .then(() => {
