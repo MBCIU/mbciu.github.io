@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard | MBCIU</title>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQ0RJeM0tMZ0ro0EjdOfmBgCb1DZS87_c",
+      authDomain: "mbciu-auth.firebaseapp.com",
+      projectId: "mbciu-auth",
+      storageBucket: "mbciu-auth.firebasestorage.app",
+      messagingSenderId: "406163757457",
+      appId: "1:406163757457:web:5317052f0c417c1e14a230"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+</head>
+<body class="bg-gradient-to-br from-white to-gray-100 dark:from-gray-900 dark:to-black min-h-screen text-gray-900 dark:text-gray-100 font-sans transition-all">
+  <div class="max-w-6xl mx-auto px-6 py-10">
+    <div class="flex justify-between items-center mb-10">
+      <div class="flex items-center gap-3">
+        <img src="logo.png" alt="MBCIU Logo" class="h-12 w-12 rounded-full shadow-md" onerror="this.style.display='none';" />
+        <h1 class="text-3xl font-bold tracking-wide">MBCIU Dashboard</h1>
+      </div>
+      <div class="flex gap-4">
+        <button onclick="toggleDarkMode()" class="text-sm text-blue-500 hover:underline">🌓 Toggle Dark Mode</button>
+        <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">Logout</button>
+        <a href="admin.html" id="adminBtn" class="hidden bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition">Admin Panel</a>
+      </div>
+    </div>
+
+    <div class="mb-8">
+      <h2 class="text-2xl font-semibold mb-2">Welcome to MBCIU Tools</h2>
+      <p id="welcomeText" class="text-gray-600 dark:text-gray-300">Checking your access...</p>
+    </div>
+
+    <div id="toolsContainer" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+    <footer class="mt-16 text-center text-sm text-gray-500 dark:text-gray-400">
+      &copy; <span id="year"></span> Warda Syeda | MBCIU
+    </footer>
+  </div>
+
+  <script>
+    if (localStorage.getItem("theme") === "dark") {
+      document.documentElement.classList.add("dark");
+    }
+
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle("dark");
+      const isDark = document.documentElement.classList.contains("dark");
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+    }
+
+    function logout() {
+      firebase.auth().signOut().then(() => {
+        window.location.href = "/index.html";
+      });
+    }
+
+    const tools = [
+      { id: "tool1", name: "Get Started with 7T Data Analysis", desc: "First steps in organising and analyzing 7T MRI datasets.", img: "/Images/setup/setup.png" },
+      { id: "tool2", name: "Cortical Segmentation using FreeSurfer", desc: "Setup cortical segmentation pipelines using Samseg and recon-all", img: "/Images/setup/brain_segments.png" },
+      { id: "tool3", name: "QSMART", desc: "Estimate tissue bulk magnetic susceptibility maps (QSM) from complex-valued MRI images.", img: "/Images/setup/qsm.jpg" },
+      { id: "tool4", name: "Diffusion-weighted Imaging (DWI)", desc: "Estimate measures of White Matter integrity from diffusion-weighted MRI.", img: "/Images/setup/tracts.png" },
+      { id: "tool5", name: "Resting State fMRI (rs-fMRI)", desc: "Brain functional connectivity using rs-fMRI data", img: "/Images/setup/rsfMRI.png" },
+      { id: "tool6", name: "Task fMRI", desc: "Brain functional connectivity using task fMRI data", img: "/Images/setup/taskfMRI.png" },
+      { id: "tool7", name: "Magnetic Resonance Spectroscopy (MRS)", desc: "Estimates levels of neurotransmitters and metabolities from MRS data", img: "/Images/setup/mrs.png" },
+      { id: "gettingstarted", name: "Getting Started", desc: "Basic setup and instructions to start using MBCIU tools.", img: "/Images/setup/getting_started_tile.png", public: true }
+    ];
+
+    firebase.auth().onAuthStateChanged(async (user) => {
+      if (!user) return (window.location.href = "/index.html");
+
+      const adminEmails = ["wtsyeda@gmail.com", "wtsyeda@unimelb.edu.au"];
+      if (adminEmails.includes(user.email)) {
+        document.getElementById("adminBtn").classList.remove("hidden");
+      }
+
+      const userRef = firebase.firestore().collection("users").doc(user.uid);
+      let userData = {};
+
+      try {
+        const doc = await userRef.get();
+        userData = doc.exists ? doc.data() : {};
+      } catch (err) {
+        console.error("Error loading user data:", err);
+      }
+
+      document.getElementById("welcomeText").textContent = `Logged in as ${user.email}`;
+
+      const container = document.getElementById("toolsContainer");
+      tools.forEach(tool => {
+        const approved = userData[tool.id]?.approved === true;
+        const requested = userData[tool.id]?.requested === true;
+
+        const div = document.createElement("div");
+        div.className = "bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden";
+        div.innerHTML = `
+          <img src="${tool.img}" alt="${tool.name}" class="w-full h-40 object-cover">
+          <div class="p-5">
+            <h3 class="text-xl font-semibold mb-2">${tool.name}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">${tool.desc}</p>
+            <div id="${tool.id}-access"></div>
+          </div>
+        `;
+        container.appendChild(div);
+
+        const accessDiv = div.querySelector(`#${tool.id}-access`);
+
+        if (approved || tool.public) {
+          accessDiv.innerHTML = `<button class='bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700' onclick="window.location.href='${tool.id}.html'">Launch Tool</button>`;
+        } else if (requested) {
+          accessDiv.innerHTML = `<div class='bg-yellow-100 text-yellow-800 px-3 py-2 text-sm rounded shadow'>Access pending ⏳</div>`;
+        } else {
+          accessDiv.innerHTML = `<button class='bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600' onclick='requestToolAccess("${tool.id}")'>Request Access</button>`;
+        }
+      });
+    });
+
+    function requestToolAccess(toolId) {
+      const user = firebase.auth().currentUser;
+      if (!user) return;
+
+      const toolUpdate = {};
+      toolUpdate[`${toolId}`] = {
+        requested: true,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      firebase.firestore().collection("users").doc(user.uid).set(toolUpdate, { merge: true })
+        .then(() => {
+          alert("Access requested for " + toolId);
+          location.reload();
+        })
+        .catch(err => console.error("Error updating tool access request:", err));
+    }
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
