@@ -1,1 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Getting Started | MBCIU</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+</head>
+<body class="bg-gradient-to-br from-white to-gray-100 dark:from-gray-900 dark:to-black text-gray-900 dark:text-gray-100 font-sans min-h-screen">
+  <div class="max-w-4xl mx-auto px-6 py-10">
+    <h1 class="text-4xl font-bold mb-4">Getting Started</h1>
+    <p class="mb-8 text-gray-600 dark:text-gray-300">Welcome to MBCIU! This guide will walk you through the basics of getting your analysis environment set up, submitting your first job, and understanding results. Follow along step-by-step or jump to any section below.</p>
+
+    <nav class="mb-10">
+      <h2 class="text-2xl font-semibold mb-2">Table of Contents</h2>
+      <ul class="list-disc pl-6 space-y-2 text-blue-600 dark:text-blue-400">
+        <li><a href="#setup">1. Environment Setup</a></li>
+        <li><a href="#submit">2. Submitting Your First Job</a></li>
+        <li><a href="#results">3. Viewing Results</a></li>
+        <li><a href="#tips">4. Tips and Troubleshooting</a></li>
+      </ul>
+    </nav>
+
+    <section id="setup" class="mb-12">
+      <h3 class="text-2xl font-semibold mb-2">1. Environment Setup</h3>
+      <p class="mb-4">Begin by loading the required modules and cloning the repository:</p>
+      <pre class="bg-gray-800 text-green-300 p-4 rounded"><code>module load python/3.9
+ git clone https://github.com/username/project.git</code></pre>
+    </section>
+
+    <section id="submit" class="mb-12">
+      <h3 class="text-2xl font-semibold mb-2">2. Submitting Your First Job</h3>
+      <p class="mb-4">Use a basic SLURM script to submit your first job:</p>
+      <pre class="bg-gray-800 text-green-300 p-4 rounded"><code>sbatch job_script.sh</code></pre>
+    </section>
+
+    <section id="results" class="mb-12">
+      <h3 class="text-2xl font-semibold mb-2">3. Viewing Results</h3>
+      <p class="mb-4">After your job completes, check output files:</p>
+      <pre class="bg-gray-800 text-green-300 p-4 rounded"><code>less slurm-1234.out</code></pre>
+    </section>
+
+    <section id="tips">
+      <h3 class="text-2xl font-semibold mb-2">4. Tips and Troubleshooting</h3>
+      <p class="mb-4">For common issues, try checking environment variables or reaching out on Slack:</p>
+      <pre class="bg-gray-800 text-green-300 p-4 rounded"><code>echo $PATH</code></pre>
+    </section>
+
+    <footer class="mt-16 text-center text-sm text-gray-500 dark:text-gray-400">
+      &copy; <span id="year"></span> Warda Syeda | MBCIU
+    </footer>
+  </div>
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
 
