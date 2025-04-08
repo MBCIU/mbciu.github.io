@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Welcome | MBCIU</title>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    };
+  </script>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQ0RJeM0tMZ0ro0EjdOfmBgCb1DZS87_c",
+      authDomain: "mbciu-auth.firebaseapp.com",
+      projectId: "mbciu-auth",
+      storageBucket: "mbciu-auth.firebasestorage.app",
+      messagingSenderId: "406163757457",
+      appId: "1:406163757457:web:5317052f0c417c1e14a230"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    // Load saved theme
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    }
+  </script>
+</head>
+
+<body class="relative min-h-screen text-gray-900 dark:text-white transition-all duration-300">
+  <!-- Background Banner -->
+  <div class="absolute inset-0 z-0">
+    <img src="/Images/setup/mrs.png" alt="Banner Background" class="w-full h-full object-cover opacity-30 dark:opacity-20">
+  </div>
+
+  <!-- Main Content -->
+  <div class="relative z-10 max-w-3xl mx-auto px-4 py-10">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-10">
+      <div class="flex items-center gap-3">
+        <img src="/web/logo.svg" alt="Logo" class="h-10 w-10 rounded-full" onerror="this.style.display='none';"/>
+        <h1 class="text-2xl font-bold">MBCIU Portal</h1>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="toggleDarkMode()" class="text-sm hover:underline">🌓 Toggle Mode</button>
+        <button id="logoutBtn" onclick="logout()" class="text-sm text-red-500 hover:underline hidden">Logout</button>
+      </div>
+    </div>
+
+    <!-- Welcome -->
+    <section class="text-center bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl backdrop-blur-sm bg-opacity-80 dark:bg-opacity-80">
+      <h2 class="text-3xl font-bold mb-4">Welcome to MBCIU</h2>
+      <p class="text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+        A secure platform for collaborative knowledge, data processing, and cutting-edge research. Please log in or sign up to access your tools.
+      </p>
+
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="web/login.html" id="loginBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Login</a>
+        <a href="web/signup.html" id="signupBtn" class="px-6 py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition">Sign Up</a>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="text-center mt-10 text-sm text-gray-600 dark:text-gray-400">
+      &copy; <span id="year"></span> Warda Syeda | MBCIU
+    </footer>
+  </div>
+
+  <script>
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+    }
+
+    function logout() {
+      firebase.auth().signOut().then(() => {
+        window.location.reload();
+      });
+    }
+
+    firebase.auth().onAuthStateChanged((user) => {
+      const loginBtn = document.getElementById("loginBtn");
+      const signupBtn = document.getElementById("signupBtn");
+      const logoutBtn = document.getElementById("logoutBtn");
+
+      if (user) {
+        logoutBtn.classList.remove("hidden");
+        loginBtn.classList.add("hidden");
+        signupBtn.classList.add("hidden");
+      } else {
+        logoutBtn.classList.add("hidden");
+        loginBtn.classList.remove("hidden");
+        signupBtn.classList.remove("hidden");
+      }
+    });
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+
+</body>
+</html>
