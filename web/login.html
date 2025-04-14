@@ -116,12 +116,6 @@
         .then((result) => {
           const user = result.user;
 
-          if (!user.emailVerified) {
-            firebase.auth().signOut();
-            alert("Please verify your email before logging in.");
-            return;
-          }
-
           firebase.database().ref("users/" + user.uid).once("value")
             .then(snapshot => {
               const data = snapshot.val();
@@ -143,12 +137,6 @@
       firebase.auth().signInWithPopup(provider)
         .then((result) => {
           const user = result.user;
-
-          if (!user.emailVerified) {
-            firebase.auth().signOut();
-            alert("Please verify your email before logging in.");
-            return;
-          }
 
           firebase.database().ref("users/" + user.uid).once("value")
             .then(snapshot => {
