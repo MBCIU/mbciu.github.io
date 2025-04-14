@@ -146,10 +146,9 @@
                 approved: false
               });
               notifyAdminAndUser(user);
-              setTimeout(() => {
-                firebase.auth().signOut();
-                window.location.href = "signup-success.html";
-              }, 1000);
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              firebase.auth().signOut();
+              window.location.href = "signup-success.html";
             }
           });
         })
@@ -180,10 +179,9 @@
                 approved: false
               });
               notifyAdminAndUser(user);
-              setTimeout(() => {
-                firebase.auth().signOut();
-                window.location.href = "signup-success.html";
-              }, 1000);
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              firebase.auth().signOut();
+              window.location.href = "signup-success.html";
             }
           });
         })
