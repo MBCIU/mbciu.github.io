@@ -33,8 +33,8 @@ service cloud.firestore {
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tools'])
         && request.resource.data.tools.diff(resource.data.tools).affectedKeys()
-          .hasOnly(['gettingstarted', 'seg', 'qsm', 'dwi', 'rsfMRI', 'tfMRI', 'MRS', 'ASL'])
-        && validToolRequest('gettingstarted') && validToolRequest('seg')
+          .hasOnly(['gettingstarted', 'spartan', 'seg', 'qsm', 'dwi', 'rsfMRI', 'tfMRI', 'MRS', 'ASL'])
+        && validToolRequest('gettingstarted') && validToolRequest('spartan') && validToolRequest('seg')
         && validToolRequest('qsm') && validToolRequest('dwi')
         && validToolRequest('rsfMRI') && validToolRequest('tfMRI')
         && validToolRequest('MRS') && validToolRequest('ASL');
