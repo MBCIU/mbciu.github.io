@@ -12,7 +12,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 const TOOL_IDS = Object.freeze([
-  "gettingstarted", "seg", "qsm", "dwi", "rsfMRI", "tfMRI", "MRS", "ASL"
+  "gettingstarted", "spartan", "seg", "qsm", "dwi", "rsfMRI", "tfMRI", "MRS", "ASL"
 ]);
 
 function normaliseEmail(email) {
