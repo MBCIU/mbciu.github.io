@@ -171,9 +171,13 @@ apptainer exec --cleanenv \
       if(!user){message.innerHTML='<a href="../../web/login.html">Log in</a> to view this tutorial.';return;}
       try{
         await user.getIdToken(true); await db.enableNetwork();
-        if(await userIsAdmin(user) || await requireApprovedUser(user)){
+        const admin=await userIsAdmin(user);
+        const approvedAccount=await requireApprovedUser(user);
+        const profile=await getCurrentProfile(user);
+        const spartanAccess=profile?.tools?.spartan?.approved===true;
+        if(admin || (approvedAccount && spartanAccess)){
           document.getElementById("gate").style.display="none";document.getElementById("tutorial").style.display="block";
-        }else{message.textContent="This account has not been approved.";}
+        }else{message.textContent="Spartan workflow access has not been approved for this account. Request access from the dashboard.";}
       }catch(error){console.error(error);message.textContent="Unable to verify access. Return to the dashboard and try again.";}
     });
   </script>
