@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spartan Workflows | MBCIU</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="../../web/firebase-config.js"></script>
+  <style>
+    :root{--navy:#102a43;--blue:#155eef;--ink:#243b53;--muted:#627d98;--line:#d9e2ec;--wash:#f4f7fb;--good:#087f5b;--warn:#9a6700}
+    *{box-sizing:border-box} body{margin:0;background:var(--wash);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}
+    header{background:linear-gradient(135deg,#4c1d95,#155eef);color:white;padding:36px 22px} header>div,main{max-width:1050px;margin:auto}
+    h1{margin:0 0 8px;font-size:clamp(2rem,4vw,3rem);line-height:1.15} h2{margin-top:2.3rem;color:var(--navy);border-bottom:2px solid var(--line);padding-bottom:.35rem} h3{color:#1f4b7a;margin-top:1.6rem}
+    main{background:white;min-height:70vh;padding:30px clamp(20px,5vw,64px) 60px;box-shadow:0 8px 30px #102a4312} a{color:var(--blue)} header a{color:white}
+    nav{background:#f1efff;border:1px solid #d8d2ff;border-radius:12px;padding:16px 20px} nav ul{columns:2;margin:.5rem 0}
+    pre{overflow:auto;color:#e6edf3;background:#111827;border-radius:10px;padding:18px;line-height:1.5} code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .callout{border-left:5px solid var(--blue);background:#eff6ff;padding:13px 16px;margin:20px 0}.warning{border-color:#e6a700;background:#fff8db}.success{border-color:var(--good);background:#e9fbf4}
+    table{width:100%;border-collapse:collapse;margin:16px 0}th,td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top}th{background:#eef2f7}
+    .steps{counter-reset:step;padding:0}.steps>li{list-style:none;counter-increment:step;margin:16px 0;padding-left:42px;position:relative}.steps>li:before{content:counter(step);position:absolute;left:0;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:white;background:var(--blue);font-weight:700}
+    #gate{max-width:650px;margin:80px auto;padding:30px;background:white;border-radius:14px;box-shadow:0 8px 30px #102a4320;text-align:center}#tutorial{display:none}footer{text-align:center;color:var(--muted);padding:25px}@media(max-width:700px){nav ul{columns:1}}
+  </style>
+</head>
+<body>
+  <section id="gate"><h1 style="color:#102a43;font-size:1.7rem">Checking Spartan tutorial access…</h1><p id="gateMessage">Please wait.</p></section>
+  <div id="tutorial">
+    <header><div><p><a href="../../web/dashboard.html">← Back to Dashboard</a></p><h1>Spartan workflows</h1><p>Safe, reproducible SLURM workflows for MBCIU neuroimaging</p></div></header>
+    <main>
+      <div class="callout"><strong>Purpose.</strong> Use this guide to move from an interactive prototype to a traceable Spartan batch workflow. Do not run compute-heavy neuroimaging commands on the login node.</div>
+      <nav><strong>Contents</strong><ul>
+        <li><a href="#connect">Connect</a></li><li><a href="#storage">Organise data</a></li><li><a href="#software">Load software</a></li><li><a href="#job">Submit a job</a></li><li><a href="#arrays">Use job arrays</a></li><li><a href="#monitor">Monitor resources</a></li><li><a href="#containers">Use containers</a></li><li><a href="#safety">Sanity checks</a></li>
+      </ul></nav>
+
+      <h2 id="connect">1. Connect to Spartan</h2>
+      <pre><code>ssh YOUR_USERNAME@spartan.hpc.unimelb.edu.au</code></pre>
+      <p>Use a University-approved SSH method and multifactor authentication where required. Read the message of the day because outages and module changes are announced there.</p>
+      <pre><code># Useful first checks
+hostname
+whoami
+pwd
+groups
+sinfo --summarize</code></pre>
+
+      <h2 id="storage">2. Organise inputs, outputs and logs</h2>
+      <p>Keep immutable inputs separate from generated derivatives. Replace <code>punimXXXX</code> with the actual Spartan project ID.</p>
+      <pre><code>PROJECT_ROOT=/path/to/your/punimXXXX/project
+mkdir -p "$PROJECT_ROOT"/{inputs,derivatives,scripts,logs,manifests}
+
+# Record files before processing
+find "$PROJECT_ROOT/inputs" -type f -print0 | sort -z | xargs -0 sha256sum \
+  &gt; "$PROJECT_ROOT/manifests/input_sha256.txt"</code></pre>
+      <div class="callout warning"><strong>Never put passwords or tokens in job scripts.</strong> Keep credentials outside the repository, restrict permissions, and remove temporary credential files when a transfer finishes.</div>
+
+      <h3>Transfer from Mediaflux</h3>
+      <p>The University provides restartable Mediaflux clients on Spartan. Discover the current module name before loading it, and keep transfer concurrency modest.</p>
+      <pre><code>module spider unimelb-mf-clients
+module load unimelb-mf-clients
+unimelb-mf-check --help
+unimelb-mf-download --help</code></pre>
+
+      <h2 id="software">3. Use reproducible software environments</h2>
+      <pre><code>module purge
+module spider FreeSurfer
+module spider FSL
+module spider ANTs
+
+# Load an explicit version returned by module spider
+module load FreeSurfer/VERSION
+module list
+recon-all -version</code></pre>
+      <p>Record module names, versions and commands in each job log. Avoid unversioned <code>module load</code> statements in production workflows.</p>
+
+      <h2 id="job">4. Submit one neuroimaging job</h2>
+      <p>Create <code>scripts/run_subject.sh</code>:</p>
+      <pre><code>#!/usr/bin/env bash
+#SBATCH --job-name=mbciu_fs
+#SBATCH --account=punimXXXX
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=32G
+#SBATCH --time=36:00:00
+#SBATCH --output=logs/%x_%j.out
+#SBATCH --error=logs/%x_%j.err
+
+set -euo pipefail
+
+subject_id=${1:?"subject ID required"}
+input_t1=${2:?"input T1 required"}
+subjects_dir=${3:?"SUBJECTS_DIR required"}
+
+[[ "$subject_id" =~ ^[A-Za-z0-9._-]+$ ]] || exit 2
+[[ -s "$input_t1" ]] || { echo "Missing input: $input_t1"; exit 2; }
+
+module purge
+module load FreeSurfer/VERSION
+export SUBJECTS_DIR="$subjects_dir"
+
+echo "Started: $(date --iso-8601=seconds)"
+echo "Host: $(hostname)"
+echo "Input SHA-256: $(sha256sum "$input_t1" | awk '{print $1}')"
+module list 2&gt;&amp;1
+
+recon-all -s "$subject_id" -i "$input_t1" -all \
+  -parallel -openmp "${SLURM_CPUS_PER_TASK}"
+
+grep -q "finished without error" \
+  "$SUBJECTS_DIR/$subject_id/scripts/recon-all.log"
+echo "Finished: $(date --iso-8601=seconds)"</code></pre>
+      <p>Create the log directory before submission, then submit from the project root:</p>
+      <pre><code>mkdir -p logs
+sbatch scripts/run_subject.sh sub-001 inputs/sub-001_T1w.nii.gz derivatives/freesurfer</code></pre>
+
+      <h2 id="arrays">5. Scale with a manifest and job array</h2>
+      <p>Use a tab-separated manifest rather than inferring identity from directory order:</p>
+      <pre><code># manifests/subjects.tsv
+sub-001    /absolute/path/sub-001_T1w.nii.gz
+sub-002    /absolute/path/sub-002_T1w.nii.gz
+sub-003    /absolute/path/sub-003_T1w.nii.gz</code></pre>
+      <p>Array wrapper:</p>
+      <pre><code>#!/usr/bin/env bash
+#SBATCH --job-name=mbciu_array
+#SBATCH --account=punimXXXX
+#SBATCH --array=1-3%3
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=32G
+#SBATCH --time=36:00:00
+#SBATCH --output=logs/%x_%A_%a.out
+#SBATCH --error=logs/%x_%A_%a.err
+
+set -euo pipefail
+manifest=${1:?"manifest required"}
+line=$(sed -n "${SLURM_ARRAY_TASK_ID}p" "$manifest")
+IFS=$'\t' read -r subject_id input_t1 &lt;&lt;&lt; "$line"
+[[ -n "$subject_id" &amp;&amp; -s "$input_t1" ]] || exit 2
+
+bash scripts/run_subject.sh "$subject_id" "$input_t1" derivatives/freesurfer</code></pre>
+      <div class="callout warning"><strong>Array range must match the manifest.</strong> Check with <code>wc -l</code>, inspect the first and last rows, and start with one test subject before launching the cohort.</div>
+
+      <h2 id="monitor">6. Monitor and right-size resources</h2>
+      <table><thead><tr><th>Task</th><th>Command</th></tr></thead><tbody>
+        <tr><td>See queued/running jobs</td><td><code>squeue -u "$USER"</code></td></tr>
+        <tr><td>Inspect completed job accounting</td><td><code>sacct -j JOB_ID --format=JobID,State,Elapsed,MaxRSS,AllocCPUS,ExitCode</code></td></tr>
+        <tr><td>Cancel a known job</td><td><code>scancel JOB_ID</code></td></tr>
+        <tr><td>Inspect output/error</td><td><code>less logs/JOB_NAME_JOB_ID.out</code></td></tr>
+      </tbody></table>
+      <p>After representative jobs finish, compare requested time, memory and CPUs with actual use. Excessive requests increase queue time and reduce shared capacity; insufficient requests cause timeouts or out-of-memory termination.</p>
+
+      <h2 id="containers">7. Use containers safely</h2>
+      <pre><code>module spider Apptainer
+module load Apptainer/VERSION
+
+apptainer exec --cleanenv \
+  --bind "$PROJECT_ROOT:/work" \
+  /path/to/versioned_image.sif \
+  command --input /work/inputs --output /work/derivatives</code></pre>
+      <ul><li>Pin the image version or digest.</li><li>Bind only required directories.</li><li>Keep secrets out of environment exports and logs.</li><li>Record the command and image checksum.</li></ul>
+
+      <h2 id="safety">8. Built-in sanity checks</h2>
+      <ul>
+        <li>☐ Validate the subject ID and input path before computation.</li><li>☐ Run one subject end-to-end before submitting an array.</li><li>☐ Use <code>set -euo pipefail</code> and quote variable expansions.</li><li>☐ Write outputs to a new derivative directory; never overwrite raw data.</li><li>☐ Confirm expected completion text and output files.</li><li>☐ Review failures individually; do not blindly resubmit the full cohort.</li><li>☐ Perform modality-specific visual QC before analysis.</li><li>☐ Archive manifests, logs, software versions and checksums.</li>
+      </ul>
+      <div class="callout success"><strong>Publication acknowledgement:</strong> University guidance requests: “This research was supported by The University of Melbourne’s Research Computing Services and the Petascale Campus.”</div>
+
+      <h2>Official resources</h2>
+      <ul><li><a href="https://rcs-knowledge-hub.atlassian.net/wiki/spaces/KB/pages/880345089/Spartan%2BHPC">Spartan HPC Knowledge Hub</a></li><li><a href="https://dashboard.hpc.unimelb.edu.au/forms/script_generator/">Spartan SLURM script generator</a></li><li><a href="https://dashboard.hpc.unimelb.edu.au/status_specs/">Spartan status and specifications</a></li><li><a href="https://rcs-knowledge-hub.atlassian.net/wiki/spaces/KB/pages/5473188/Mediaflux%2Bon%2BSpartan%2BHPC">Mediaflux on Spartan</a></li></ul>
+    </main>
+    <footer>Melbourne Brain Centre Imaging Unit · Spartan workflow guide</footer>
+  </div>
+  <script>
+    firebase.auth().onAuthStateChanged(async user => {
+      const message=document.getElementById("gateMessage");
+      if(!user){message.innerHTML='<a href="../../web/login.html">Log in</a> to view this tutorial.';return;}
+      try{
+        await user.getIdToken(true); await db.enableNetwork();
+        if(await userIsAdmin(user) || await requireApprovedUser(user)){
+          document.getElementById("gate").style.display="none";document.getElementById("tutorial").style.display="block";
+        }else{message.textContent="This account has not been approved.";}
+      }catch(error){console.error(error);message.textContent="Unable to verify access. Return to the dashboard and try again.";}
+    });
+  </script>
+</body>
+</html>
