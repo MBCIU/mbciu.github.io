@@ -8,8 +8,10 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="firebase-config.js"></script>
+  <script>emailjs.init("NeoWvdWOFVFsHj6l1");</script>
 
   <script>
     tailwind.config = { darkMode: 'class' };
@@ -118,14 +120,23 @@
         } else if (requested) {
           accessDiv.innerHTML = `<div class='bg-yellow-100 text-yellow-800 px-3 py-2 text-sm rounded shadow'>Access pending ⏳</div>`;
         } else {
-          accessDiv.innerHTML = `<button class='bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600' onclick='requestToolAccess("${tool.id}")'>Request Access</button>`;
+          accessDiv.innerHTML = `<button id='${tool.id}-request-button' class='bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 disabled:opacity-50' onclick='requestToolAccess("${tool.id}")'>Request Access</button>`;
         }
       });
     });
 
-    function requestToolAccess(toolId) {
+    async function requestToolAccess(toolId) {
       const user = firebase.auth().currentUser;
       if (!user || !TOOL_IDS.includes(toolId)) return;
+
+      const tool = tools.find(item => item.id === toolId);
+      if (!tool) return;
+      const requestButton = document.getElementById(`${toolId}-request-button`);
+      if (requestButton?.disabled) return;
+      if (requestButton) {
+        requestButton.disabled = true;
+        requestButton.textContent = "Sending request…";
+      }
 
       const toolUpdate = { tools: {} };
       toolUpdate.tools[toolId] = {
@@ -133,12 +144,30 @@
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
       };
 
-      firebase.firestore().collection("users").doc(user.uid).set(toolUpdate, { merge: true })
-        .then(() => {
-          alert("Access requested for " + toolId);
-          location.reload();
-        })
-        .catch(err => console.error("Error updating tool access request:", err));
+      try {
+        await firebase.firestore().collection("users").doc(user.uid).set(toolUpdate, { merge: true });
+
+        try {
+          await emailjs.send("service_1tqzrwr", "template_signup_alert", {
+            email: user.email,
+            tool: tool.name,
+            request_type: "Tool access request"
+          });
+          alert(`Your access request for ${tool.name} was sent to the administrator.`);
+        } catch (emailError) {
+          console.error("Access request saved, but admin email failed:", emailError);
+          alert("Your access request was saved for administrator review, but the email notification could not be sent.");
+        }
+
+        location.reload();
+      } catch (error) {
+        console.error("Error submitting tool access request:", error);
+        alert("Your request could not be submitted. Please try again.");
+        if (requestButton) {
+          requestButton.disabled = false;
+          requestButton.textContent = "Request Access";
+        }
+      }
     }
 
     document.getElementById("year").textContent = new Date().getFullYear();
