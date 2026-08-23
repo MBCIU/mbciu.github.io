@@ -34,6 +34,7 @@
     <div class="flex justify-between items-center mb-8">
       <h1 class="text-2xl font-bold">Admin Approval Panel</h1>
       <div class="flex gap-3 items-center">
+        <a href="dashboard.html" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">← Back to Dashboard</a>
         <button onclick="toggleDarkMode()" class="text-sm text-blue-500 hover:underline">🌓 Toggle Dark Mode</button>
         <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">Logout</button>
       </div>
@@ -92,7 +93,8 @@
       const userTable = document.getElementById("userTable");
       userTable.innerHTML = "";
 
-      db.collection("users").get().then((snapshot) => {
+      db.collection("users").onSnapshot((snapshot) => {
+        userTable.innerHTML = "";
         snapshot.forEach(child => {
           const uid = child.id;
           const data = child.data();
@@ -128,7 +130,7 @@
           row.appendChild(actionCell);
           userTable.appendChild(row);
         });
-      }).catch(error => alert("Unable to load users: " + error.message));
+      }, error => alert("Unable to load users: " + error.message));
     }
 
     async function approveUser(uid) {
@@ -144,7 +146,6 @@
         }).catch((error) => {
           console.error("EmailJS error:", error);
         });
-        loadUsers();
       });
     }
 
@@ -154,7 +155,7 @@
       update[`tools.${toolId}.approved`] = approved;
       update[`tools.${toolId}.requested`] = false;
       update[`tools.${toolId}.reviewedAt`] = firebase.firestore.FieldValue.serverTimestamp();
-      return db.collection("users").doc(uid).update(update).then(loadUsers)
+      return db.collection("users").doc(uid).update(update)
         .catch(error => alert("Unable to update tool access: " + error.message));
     }
 
