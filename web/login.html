@@ -23,7 +23,11 @@
 const message = document.getElementById("message");
 async function authorise(user) {
   if (!user.emailVerified) throw new Error("Verify your email before logging in.");
-  if (!await requireApprovedUser(user)) throw new Error("Your account is awaiting administrator approval.");
+  await user.getIdToken(true);
+  await db.enableNetwork();
+  if (!await userIsAdmin(user) && !await requireApprovedUser(user)) {
+    throw new Error(`No approved Firestore profile was found for ${normaliseEmail(user.email)} (UID: ${user.uid}).`);
+  }
   window.location.replace("dashboard.html");
 }
 async function runLogin(action) {
