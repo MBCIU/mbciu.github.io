@@ -92,7 +92,8 @@
       const userTable = document.getElementById("userTable");
       userTable.innerHTML = "";
 
-      db.collection("users").get().then((snapshot) => {
+      db.collection("users").onSnapshot((snapshot) => {
+        userTable.innerHTML = "";
         snapshot.forEach(child => {
           const uid = child.id;
           const data = child.data();
@@ -128,7 +129,7 @@
           row.appendChild(actionCell);
           userTable.appendChild(row);
         });
-      }).catch(error => alert("Unable to load users: " + error.message));
+      }, error => alert("Unable to load users: " + error.message));
     }
 
     async function approveUser(uid) {
@@ -144,7 +145,6 @@
         }).catch((error) => {
           console.error("EmailJS error:", error);
         });
-        loadUsers();
       });
     }
 
@@ -154,7 +154,7 @@
       update[`tools.${toolId}.approved`] = approved;
       update[`tools.${toolId}.requested`] = false;
       update[`tools.${toolId}.reviewedAt`] = firebase.firestore.FieldValue.serverTimestamp();
-      return db.collection("users").doc(uid).update(update).then(loadUsers)
+      return db.collection("users").doc(uid).update(update)
         .catch(error => alert("Unable to update tool access: " + error.message));
     }
 
