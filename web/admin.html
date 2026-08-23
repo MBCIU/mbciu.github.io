@@ -8,9 +8,10 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script src="firebase-config.js"></script>
 
   <script>
     tailwind.config = {
@@ -19,15 +20,6 @@
   </script>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBQ0RJeM0tMZ0ro0EjdOfmBgCb1DZS87_c",
-      authDomain: "mbciu-auth.firebaseapp.com",
-      projectId: "mbciu-auth",
-      storageBucket: "mbciu-auth.firebasestorage.app",
-      messagingSenderId: "406163757457",
-      appId: "1:406163757457:web:5317052f0c417c1e14a230"
-    };
-    firebase.initializeApp(firebaseConfig);
     emailjs.init("NeoWvdWOFVFsHj6l1");
 
     if (localStorage.getItem("theme") === "dark") {
@@ -54,6 +46,7 @@
             <th class="px-6 py-3 text-left text-sm font-semibold">Email</th>
             <th class="px-6 py-3 text-left text-sm font-semibold">Email Verified</th>
             <th class="px-6 py-3 text-left text-sm font-semibold">Approved</th>
+            <th class="px-6 py-3 text-left text-sm font-semibold">Tool access</th>
             <th class="px-6 py-3 text-left text-sm font-semibold">Action</th>
           </tr>
         </thead>
@@ -80,14 +73,13 @@
       });
     }
 
-    firebase.auth().onAuthStateChanged((user) => {
+    firebase.auth().onAuthStateChanged(async (user) => {
       if (!user) {
         window.location.href = "/index.html";
         return;
       }
 
-      const adminEmails = ["wtsyeda@gmail.com", "wtsyeda@unimelb.edu.au"];
-      if (!adminEmails.includes(user.email)) {
+      if (!await userIsAdmin(user)) {
         alert("Access denied: You are not an admin.");
         window.location.href = "/web/dashboard.html";
         return;
@@ -100,29 +92,50 @@
       const userTable = document.getElementById("userTable");
       userTable.innerHTML = "";
 
-      firebase.database().ref("users").once("value", (snapshot) => {
+      db.collection("users").get().then((snapshot) => {
         snapshot.forEach(child => {
-          const uid = child.key;
-          const data = child.val();
+          const uid = child.id;
+          const data = child.data();
 
           const row = document.createElement("tr");
-          row.innerHTML = `
-            <td class="px-6 py-4">${data.email}</td>
-            <td class="px-6 py-4">—</td>
-            <td class="px-6 py-4">${data.approved ? "✅ Yes" : "❌ No"}</td>
-            <td class="px-6 py-4">
-              ${data.approved ? "" : `<button onclick="approveUser('${uid}', '${data.email}')" class="text-sm text-green-600 hover:underline">Approve</button>`}
-            </td>
-          `;
+          const values = [data.email || "Unknown", "Verified at sign-in", data.approved ? "✅ Yes" : "❌ No"];
+          values.forEach(value => {
+            const cell = document.createElement("td"); cell.className = "px-6 py-4"; cell.textContent = value; row.appendChild(cell);
+          });
+
+          const toolsCell = document.createElement("td");
+          toolsCell.className = "px-6 py-4 space-y-1";
+          TOOL_IDS.forEach(toolId => {
+            const state = data.tools?.[toolId] || {};
+            if (!state.requested && !state.approved) return;
+            const line = document.createElement("div");
+            line.textContent = `${toolId}: ${state.approved ? "approved" : "pending"} `;
+            if (state.requested && !state.approved) {
+              const button = document.createElement("button");
+              button.className = "text-green-700 underline"; button.textContent = "Approve";
+              button.addEventListener("click", () => setToolAccess(uid, toolId, true)); line.appendChild(button);
+            }
+            toolsCell.appendChild(line);
+          });
+          if (!toolsCell.childElementCount) toolsCell.textContent = "—";
+          row.appendChild(toolsCell);
+
+          const actionCell = document.createElement("td"); actionCell.className = "px-6 py-4";
+          if (!data.approved) {
+            const button = document.createElement("button"); button.className = "text-green-700 underline"; button.textContent = "Approve account";
+            button.addEventListener("click", () => approveUser(uid)); actionCell.appendChild(button);
+          }
+          row.appendChild(actionCell);
           userTable.appendChild(row);
         });
-      });
+      }).catch(error => alert("Unable to load users: " + error.message));
     }
 
-    function approveUser(uid, email) {
-      firebase.database().ref("users/" + uid).update({
-        approved: true
-      }).then(() => {
+    async function approveUser(uid) {
+      const ref = db.collection("users").doc(uid);
+      const snapshot = await ref.get();
+      const email = snapshot.data()?.email;
+      return ref.update({ approved: true }).then(() => {
         alert("User approved!");
         emailjs.send("service_1tqzrwr", "template_user_approved", {
           email: email
@@ -133,6 +146,16 @@
         });
         loadUsers();
       });
+    }
+
+    function setToolAccess(uid, toolId, approved) {
+      if (!TOOL_IDS.includes(toolId)) return;
+      const update = {};
+      update[`tools.${toolId}.approved`] = approved;
+      update[`tools.${toolId}.requested`] = false;
+      update[`tools.${toolId}.reviewedAt`] = firebase.firestore.FieldValue.serverTimestamp();
+      return db.collection("users").doc(uid).update(update).then(loadUsers)
+        .catch(error => alert("Unable to update tool access: " + error.message));
     }
 
     document.getElementById("year").textContent = new Date().getFullYear();

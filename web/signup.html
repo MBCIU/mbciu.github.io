@@ -1,196 +1,55 @@
 <!DOCTYPE html>
- <html lang="en" class="">
- <head>
-   <meta charset="UTF-8" />
-   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-   <title>Sign Up | MBCIU</title>
- 
-   <!-- Firebase SDKs -->
-   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
- 
-   <!-- Tailwind CSS -->
-   <script src="https://cdn.tailwindcss.com"></script>
-   <script>
-     tailwind.config = { darkMode: 'class' };
-   </script>
- 
-   <!-- EmailJS SDK -->
-   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-   <script>
-     emailjs.init("NeoWvdWOFVFsHj6l1");
-   </script>
- 
-   <script>
-     const firebaseConfig = {
-       apiKey: "AIzaSyBQ0RJeM0tMZ0ro0EjdOfmBgCb1DZS87_c",
-       authDomain: "mbciu-auth.firebaseapp.com",
-       projectId: "mbciu-auth",
-       storageBucket: "mbciu-auth.firebasestorage.app",
-       messagingSenderId: "406163757457",
-       appId: "1:406163757457:web:5317052f0c417c1e14a230"
-     };
-     firebase.initializeApp(firebaseConfig);
- 
-     if (localStorage.getItem("theme") === "dark") {
-       document.documentElement.classList.add("dark");
-     }
-   </script>
- </head>
- <body class="bg-gradient-to-r from-blue-100 to-purple-100 dark:from-gray-900 dark:to-black min-h-screen text-gray-900 dark:text-white">
-   <div class="max-w-md mx-auto mt-12 px-4">
-     <div class="flex justify-between items-center mb-6">
-       <h1 class="text-2xl font-bold">Sign Up for MBCIU</h1>
-       <button onclick="toggleDarkMode()" class="text-sm hover:underline">🌓 Toggle Mode</button>
-     </div>
- 
-     <div class="bg-white dark:bg-gray-800 shadow-xl rounded-xl p-6">
-       <div class="space-y-4">
-         <input id="email" type="email" placeholder="Email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-         <input id="password" type="password" placeholder="Password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
- 
-         <button onclick="signupWithEmail()" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">Sign Up with Email</button>
- 
-         <div class="border-t pt-4 text-center text-sm text-gray-500 dark:text-gray-400">or sign up with</div>
- 
-         <button onclick="signupWithGoogle()" class="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition">Continue with Google</button>
-         <button onclick="signupWithMicrosoft()" class="w-full bg-gray-800 text-white py-2 rounded-lg hover:bg-gray-900 transition">Continue with Microsoft</button>
- 
-         <p class="text-sm text-center text-gray-600 dark:text-gray-400">
-           Already have an account? <a href="login.html" class="text-blue-600 dark:text-blue-400 hover:underline">Log In</a>
-         </p>
-       </div>
-     </div>
- 
-     <footer class="text-center mt-8 text-sm text-gray-600 dark:text-gray-400">
-       &copy; <span id="year"></span> Warda Syeda | MBCIU
-     </footer>
-   </div>
- 
-   <script>
-     function toggleDarkMode() {
-       document.documentElement.classList.toggle('dark');
-       const isDark = document.documentElement.classList.contains('dark');
-       localStorage.setItem("theme", isDark ? "dark" : "light");
-     }
- 
-     function notifyAdminAndUser(user) {
-       if (!user || !user.email) return;
-       emailjs.send("service_1tqzrwr", "template_signup_alert", {
-         email: user.email
-       }).then(() => {
-         console.log("✅ Admin notified of signup.");
-       }).catch((error) => {
-         console.error("❌ Failed to notify admin:", error);
-       });
-     }
- 
-     function signupWithEmail() {
-       const email = document.getElementById("email").value;
-       const password = document.getElementById("password").value;
- 
-       if (!email || !password) {
-         alert("Please enter both email and password.");
-         return;
-       }
- 
-       firebase.auth().fetchSignInMethodsForEmail(email).then((methods) => {
-         if (methods.length > 0) {
-           alert("An account with this email already exists. Please log in instead.");
-         } else {
-           firebase.auth().createUserWithEmailAndPassword(email, password)
-             .then((userCredential) => {
-               const user = userCredential.user;
- 
-               firebase.database().ref("users/" + user.uid).set({
-                 email: user.email,
-                 approved: false
-               });
- 
-               user.sendEmailVerification().then(() => {
-                 notifyAdminAndUser(user);
-                 firebase.auth().signOut();
-                 window.location.href = "signup-success.html";
-               });
-             })
-             .catch((error) => {
-               alert("Signup Failed: " + error.message);
-             });
-         }
-       }).catch((error) => {
-         alert("Error checking email: " + error.message);
-       });
-     }
- 
-     function signupWithGoogle() {
-       const provider = new firebase.auth.GoogleAuthProvider();
-       firebase.auth().signInWithPopup(provider)
-         .then(async (result) => {
-           const user = result.user;
-           if (!user || !user.email) {
-             alert("Something went wrong. Could not retrieve user information.");
-             return;
-           }
- 
-           const methods = await firebase.auth().fetchSignInMethodsForEmail(user.email);
-            await new Promise(resolve => setTimeout(resolve, 2000));
-           
-           if (methods.length > 0) {
-             alert("An account with this email already exists. Please log in instead.");
-             await firebase.auth().signOut();
-             return;
-           }
- 
-           await firebase.database().ref("users/" + user.uid).set({
-             email: user.email,
-             approved: false
-           });
- 
-           notifyAdminAndUser(user);
-           await new Promise(resolve => setTimeout(resolve, 2000));
-           firebase.auth().signOut();
-           window.location.href = "signup-success.html";
-         })
-         .catch((error) => {
-           alert("Google sign-up failed: " + error.message);
-         });
-     }
- 
-     function signupWithMicrosoft() {
-       const provider = new firebase.auth.OAuthProvider('microsoft.com');
-       firebase.auth().signInWithPopup(provider)
-         .then(async (result) => {
-           const user = result.user;
-           if (!user || !user.email) {
-             alert("Something went wrong. Could not retrieve user information.");
-             return;
-           }
- 
-           const methods = await firebase.auth().fetchSignInMethodsForEmail(user.email);
-           await new Promise(resolve => setTimeout(resolve, 2000));
-           if (methods.length > 0) {
-             alert("An account with this email already exists. Please log in instead.");
-             await firebase.auth().signOut();
-             return;
-           }
- 
-           await firebase.database().ref("users/" + user.uid).set({
-             email: user.email,
-             approved: false
-           });
- 
-           notifyAdminAndUser(user);
-           await new Promise(resolve => setTimeout(resolve, 2000));
-           firebase.auth().signOut();
-           window.location.href = "signup-success.html";
-         })
-         .catch((error) => {
-           alert("Microsoft sign-up failed: " + error.message);
-         });
-     }
- 
-     document.getElementById("year").textContent = new Date().getFullYear();
-   </script>
- </body>
- </html>
+<html lang="en"><head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign Up | MBCIU</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script><script src="firebase-config.js"></script>
+</head><body class="bg-gradient-to-r from-blue-100 to-purple-100 min-h-screen text-gray-900">
+<main class="max-w-md mx-auto pt-12 px-4"><h1 class="text-2xl font-bold mb-6">Sign Up for MBCIU</h1>
+<div class="bg-white shadow-xl rounded-xl p-6 space-y-4">
+  <input id="email" type="email" autocomplete="email" placeholder="Email" class="w-full px-4 py-2 border rounded-lg">
+  <input id="password" type="password" autocomplete="new-password" minlength="12" placeholder="Password (12+ characters)" class="w-full px-4 py-2 border rounded-lg">
+  <button id="emailSignup" class="w-full bg-blue-600 text-white py-2 rounded-lg">Sign Up with Email</button>
+  <div class="border-t pt-4 text-center text-sm text-gray-500">or</div>
+  <button id="googleSignup" class="w-full bg-red-600 text-white py-2 rounded-lg">Continue with Google</button>
+  <button id="microsoftSignup" class="w-full bg-gray-800 text-white py-2 rounded-lg">Continue with Microsoft</button>
+  <p id="message" role="alert" class="text-sm text-red-700"></p>
+  <p class="text-sm text-center">Already registered? <a href="login.html" class="text-blue-700 underline">Log in</a></p>
+</div></main>
+<script>
+const message = document.getElementById("message");
+const buttons = [...document.querySelectorAll("button")];
+function setBusy(busy) { buttons.forEach(button => button.disabled = busy); }
+function showError(error) { message.textContent = error?.message || "Unable to create the account."; }
+async function createPendingProfile(user) {
+  if (!user?.email) throw new Error("The identity provider did not return an email address.");
+  const ref = db.collection("users").doc(user.uid);
+  const existing = await ref.get();
+  if (!existing.exists) await ref.set({email: normaliseEmail(user.email), approved: false, tools: {}, createdAt: firebase.firestore.FieldValue.serverTimestamp()});
+}
+async function finishSignup(user, needsVerification) {
+  await createPendingProfile(user);
+  if (needsVerification) await user.sendEmailVerification();
+  await firebase.auth().signOut();
+  window.location.replace("signup-success.html");
+}
+document.getElementById("emailSignup").addEventListener("click", async () => {
+  setBusy(true); message.textContent = "";
+  try {
+    const email = normaliseEmail(document.getElementById("email").value);
+    const password = document.getElementById("password").value;
+    if (!email || password.length < 12) throw new Error("Enter a valid email and a password of at least 12 characters.");
+    const credential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+    await finishSignup(credential.user, true);
+  } catch (error) { showError(error); setBusy(false); }
+});
+async function federatedSignup(provider) {
+  setBusy(true); message.textContent = "";
+  try { const credential = await firebase.auth().signInWithPopup(provider); await finishSignup(credential.user, false); }
+  catch (error) { showError(error); setBusy(false); }
+}
+document.getElementById("googleSignup").addEventListener("click", () => federatedSignup(new firebase.auth.GoogleAuthProvider()));
+document.getElementById("microsoftSignup").addEventListener("click", () => federatedSignup(new firebase.auth.OAuthProvider("microsoft.com")));
+</script></body></html>
