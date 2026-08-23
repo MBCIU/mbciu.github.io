@@ -8,10 +8,10 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="firebase-config.js"></script>
-  <script>emailjs.init("NeoWvdWOFVFsHj6l1");</script>
+  <script>emailjs.init({ publicKey: "NeoWvdWOFVFsHj6l1" });</script>
 
   <script>
     tailwind.config = { darkMode: 'class' };
@@ -160,7 +160,9 @@
           alert(`Your access request for ${tool.name} was sent to the administrator.`);
         } catch (emailError) {
           console.error("Access request saved, but admin email failed:", emailError);
-          alert("Your access request was saved for administrator review, but the email notification could not be sent.");
+          const emailStatus = emailError?.status ? ` (status ${emailError.status})` : "";
+          const emailReason = emailError?.text || emailError?.message || "Unknown EmailJS error";
+          alert(`Your access request was saved for administrator review, but EmailJS could not send the notification${emailStatus}: ${emailReason}`);
         }
 
         location.reload();
