@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FreeSurfer Cortical Segmentation | MBCIU</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="../../web/firebase-config.js"></script>
+  <style>
+    :root { --blue:#155eef; --navy:#102a43; --ink:#243b53; --muted:#627d98; --line:#d9e2ec; --paper:#fff; --wash:#f4f7fb; --good:#087f5b; --warn:#9a6700; }
+    * { box-sizing:border-box; }
+    body { margin:0; font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--ink); background:var(--wash); }
+    header { color:#fff; background:linear-gradient(135deg,var(--navy),#2251a3); padding:36px 22px; }
+    header div, main { max-width:1050px; margin:auto; }
+    h1 { margin:0 0 8px; font-size:clamp(2rem,4vw,3rem); line-height:1.15; }
+    h2 { color:var(--navy); margin-top:2.3rem; padding-bottom:.35rem; border-bottom:2px solid var(--line); }
+    h3 { color:#1f4b7a; margin-top:1.7rem; }
+    a { color:var(--blue); }
+    header a { color:#fff; }
+    main { background:var(--paper); min-height:70vh; padding:30px clamp(20px,5vw,64px) 60px; box-shadow:0 8px 30px #102a4312; }
+    nav { background:#edf2ff; border:1px solid #c7d2fe; border-radius:12px; padding:16px 20px; }
+    nav ul { columns:2; margin:.5rem 0; }
+    code { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+    pre { overflow:auto; color:#e6edf3; background:#111827; border-radius:10px; padding:18px; line-height:1.5; }
+    .callout { border-left:5px solid var(--blue); background:#eff6ff; padding:13px 16px; margin:20px 0; }
+    .warning { border-color:#e6a700; background:#fff8db; }
+    .success { border-color:var(--good); background:#e9fbf4; }
+    table { width:100%; border-collapse:collapse; margin:16px 0; }
+    th,td { text-align:left; vertical-align:top; border:1px solid var(--line); padding:10px 12px; }
+    th { background:#eef2f7; }
+    .steps { counter-reset:step; padding:0; }
+    .steps > li { list-style:none; counter-increment:step; margin:16px 0; padding-left:42px; position:relative; }
+    .steps > li::before { content:counter(step); position:absolute; left:0; top:1px; width:28px; height:28px; border-radius:50%; display:grid; place-items:center; color:#fff; background:var(--blue); font-weight:700; }
+    .tag { display:inline-block; border-radius:999px; padding:2px 9px; background:#dbeafe; color:#1e3a8a; font-size:.85rem; }
+    #gate { max-width:650px; margin:80px auto; padding:30px; background:#fff; border-radius:14px; box-shadow:0 8px 30px #102a4320; text-align:center; }
+    #tutorial { display:none; }
+    footer { text-align:center; color:var(--muted); padding:25px; }
+    @media (max-width:700px) { nav ul { columns:1; } table { font-size:.9rem; } }
+  </style>
+</head>
+<body>
+  <section id="gate"><h1 style="color:#102a43;font-size:1.7rem">Checking segmentation tutorial access…</h1><p id="gateMessage">Please wait.</p></section>
+
+  <div id="tutorial">
+    <header><div>
+      <p><a href="../../web/dashboard.html">← Back to Dashboard</a></p>
+      <h1>FreeSurfer cortical segmentation</h1>
+      <p>Cross-sectional reconstruction, 7T considerations, quality control and statistics</p>
+      <span class="tag">MBCIU practical tutorial</span>
+    </div></header>
+
+    <main>
+      <div class="callout"><strong>Scope.</strong> This workflow is intended for research-quality T1-weighted structural MRI. Every reconstruction must pass visual QC before morphometric measures are analysed.</div>
+
+      <nav aria-label="Tutorial contents"><strong>Contents</strong><ul>
+        <li><a href="#prerequisites">Prerequisites</a></li><li><a href="#input">Input checks</a></li>
+        <li><a href="#run">Run recon-all</a></li><li><a href="#highfield">7T and submillimetre data</a></li>
+        <li><a href="#outputs">Outputs</a></li><li><a href="#qc">Quality control</a></li>
+        <li><a href="#statistics">Extract statistics</a></li><li><a href="#corrections">Corrections and reruns</a></li>
+        <li><a href="#slurm">SLURM workflow</a></li><li><a href="#checklist">Completion checklist</a></li>
+      </ul></nav>
+
+      <h2 id="prerequisites">1. Prerequisites</h2>
+      <ul>
+        <li>FreeSurfer 8.1.0 (the current MBCIU workflow version) and a valid FreeSurfer licence.</li>
+        <li>A bias-corrected, research-quality T1-weighted NIfTI image.</li>
+        <li>A writable output directory with sufficient quota; a full reconstruction produces thousands of files.</li>
+        <li>For cluster processing: 8 CPUs, at least 16 GB RAM, and up to 24–36 hours per subject.</li>
+      </ul>
+      <pre><code># Example environment setup — adapt the module name to your cluster
+module load FreeSurfer/8.1.0-rocky8_x86_64
+export FS_LICENSE=/path/to/license.txt
+export SUBJECTS_DIR=/path/to/reconall_xsection
+mkdir -p "$SUBJECTS_DIR"
+
+recon-all -version
+test -r "$FS_LICENSE" &amp;&amp; echo "Licence found"</code></pre>
+
+      <h2 id="input">2. Check the input before processing</h2>
+      <ol class="steps">
+        <li>Confirm the image belongs to the intended participant and time point.</li>
+        <li>Check orientation, coverage, motion, ringing, wrap-around and intensity artefacts in Freeview or another NIfTI viewer.</li>
+        <li>Confirm that the image is T1-weighted and has not already been skull stripped.</li>
+        <li>Record the input checksum and software version for provenance.</li>
+      </ol>
+      <pre><code>INPUT=/path/to/sub-001_T1w.nii.gz
+SUBJECT_ID=sub-001
+
+test -s "$INPUT" || { echo "Missing input: $INPUT"; exit 1; }
+mri_info --dim "$INPUT"
+mri_info --res "$INPUT"
+sha256sum "$INPUT"</code></pre>
+      <div class="callout warning"><strong>Do not proceed</strong> if the anatomy is cropped, severely motion-corrupted, incorrectly oriented, or contains a non-brain field-of-view that invalidates reconstruction.</div>
+
+      <h2 id="run">3. Run a cross-sectional reconstruction</h2>
+      <p>The standard command imports the input and executes the complete cortical reconstruction and volumetric segmentation stream:</p>
+      <pre><code>recon-all \
+  -subject "$SUBJECT_ID" \
+  -i "$INPUT" \
+  -all \
+  -parallel \
+  -openmp 8</code></pre>
+      <p>Use <code>-i</code> only when creating the subject directory. To resume an interrupted run, omit <code>-i</code>:</p>
+      <pre><code>recon-all -subject "$SUBJECT_ID" -all -parallel -openmp 8</code></pre>
+      <p>Monitor progress without modifying the output:</p>
+      <pre><code>tail -f "$SUBJECTS_DIR/$SUBJECT_ID/scripts/recon-all.log"
+grep -E "finished without error|exited with ERRORS" \
+  "$SUBJECTS_DIR/$SUBJECT_ID/scripts/recon-all.log"</code></pre>
+
+      <h2 id="highfield">4. 7T and submillimetre data</h2>
+      <p>7T MPRAGE and MEMP2RAGE data can have stronger intensity inhomogeneity than typical 3T inputs. Inspect the bias field and tissue contrast carefully before reconstruction. Do not assume that higher spatial resolution guarantees a better segmentation.</p>
+      <p>For native submillimetre reconstruction, include <code>-hires</code>. Current FreeSurfer release guidance still requires this flag for inputs below 1 mm isotropic:</p>
+      <pre><code>recon-all \
+  -subject "$SUBJECT_ID" \
+  -i "$INPUT" \
+  -all -hires \
+  -parallel -openmp 8</code></pre>
+      <div class="callout warning"><strong>Choose deliberately.</strong> Native high-resolution processing uses more memory and time. Keep the choice consistent across the cohort and record it in the analysis protocol. For MEMP2RAGE, evaluate the chosen reconstruction (for example, uniform/denoised T1-weighted image) before committing the whole cohort.</div>
+
+      <h2 id="outputs">5. Know the principal outputs</h2>
+      <table><thead><tr><th>Location</th><th>Examples</th><th>Purpose</th></tr></thead><tbody>
+        <tr><td><code>mri/</code></td><td><code>brainmask.mgz</code>, <code>aseg.mgz</code>, <code>aparc+aseg.mgz</code>, <code>wm.mgz</code></td><td>Processed volumes and segmentations</td></tr>
+        <tr><td><code>surf/</code></td><td><code>lh.white</code>, <code>lh.pial</code>, <code>rh.white</code>, <code>rh.pial</code></td><td>Cortical surfaces</td></tr>
+        <tr><td><code>label/</code></td><td><code>lh.aparc.annot</code>, <code>rh.aparc.annot</code></td><td>Cortical atlas labels</td></tr>
+        <tr><td><code>stats/</code></td><td><code>aseg.stats</code>, <code>lh.aparc.stats</code>, <code>rh.aparc.stats</code></td><td>Regional volumes, area and thickness</td></tr>
+        <tr><td><code>scripts/</code></td><td><code>recon-all.log</code>, <code>recon-all.done</code></td><td>Provenance and completion status</td></tr>
+      </tbody></table>
+
+      <h2 id="qc">6. Visual quality control</h2>
+      <p>Open the anatomical volume, segmentation and both surfaces together:</p>
+      <pre><code>freeview \
+  -v "$SUBJECTS_DIR/$SUBJECT_ID/mri/T1.mgz" \
+     "$SUBJECTS_DIR/$SUBJECT_ID/mri/aseg.mgz":colormap=lut:opacity=0.35 \
+  -f "$SUBJECTS_DIR/$SUBJECT_ID/surf/lh.white":edgecolor=blue \
+     "$SUBJECTS_DIR/$SUBJECT_ID/surf/lh.pial":edgecolor=red \
+     "$SUBJECTS_DIR/$SUBJECT_ID/surf/rh.white":edgecolor=blue \
+     "$SUBJECTS_DIR/$SUBJECT_ID/surf/rh.pial":edgecolor=red</code></pre>
+      <h3>Inspect systematically in all three planes</h3>
+      <ul>
+        <li>Skull strip: brain tissue retained; dura, skull and neck excluded.</li>
+        <li>White surface: follows the white/grey boundary without cutting through gyri.</li>
+        <li>Pial surface: follows the grey/CSF boundary without including dura or vessels.</li>
+        <li>Subcortical labels: plausible ventricles, thalamus, caudate, putamen, pallidum, hippocampus and amygdala.</li>
+        <li>Temporal poles, orbitofrontal cortex, insula and superior cortex: common failure locations.</li>
+        <li>Left–right symmetry and unexpected regional outliers.</li>
+      </ul>
+      <div class="callout success"><strong>Minimum evidence:</strong> retain completion status, visual QC outcome, reviewer, date, software version, input identifier and notes on any correction.</div>
+
+      <h2 id="statistics">7. Extract cohort statistics</h2>
+      <p>Once every included subject has passed QC, create analysis-ready tables:</p>
+      <pre><code># One row per subject; subcortical volumes
+asegstats2table \
+  --subjects sub-001 sub-002 sub-003 \
+  --stats aseg.stats \
+  --tablefile aseg_volumes.tsv
+
+# Desikan–Killiany cortical thickness
+aparcstats2table \
+  --subjects sub-001 sub-002 sub-003 \
+  --hemi lh --meas thickness \
+  --tablefile lh_aparc_thickness.tsv
+
+aparcstats2table \
+  --subjects sub-001 sub-002 sub-003 \
+  --hemi rh --meas thickness \
+  --tablefile rh_aparc_thickness.tsv</code></pre>
+      <p>Do not silently mix FreeSurfer versions, processing flags, corrected and uncorrected outputs, or scans that failed QC.</p>
+
+      <h2 id="corrections">8. Corrections and controlled reruns</h2>
+      <table><thead><tr><th>Problem</th><th>Inspect/edit</th><th>Typical rerun</th></tr></thead><tbody>
+        <tr><td>Skull-strip error</td><td><code>brainmask.mgz</code></td><td>From the affected reconstruction stage; document the edit</td></tr>
+        <tr><td>White-matter omission</td><td><code>wm.mgz</code> or control points</td><td><code>recon-all -s ID -autorecon2-wm -autorecon3</code></td></tr>
+        <tr><td>Pial surface includes dura</td><td>Brain mask / pial placement</td><td>Rerun the relevant surface stages</td></tr>
+        <tr><td>Interrupted job</td><td><code>scripts/recon-all.log</code></td><td><code>recon-all -s ID -all</code> without <code>-i</code></td></tr>
+      </tbody></table>
+      <div class="callout warning"><strong>Preserve provenance.</strong> Back up the original reconstruction or use a versioned output location before manual correction. Never overwrite a completed cohort without recording what changed.</div>
+
+      <h2 id="slurm">9. Reusable SLURM workflow</h2>
+      <p>Download the companion script, adapt the module/licence paths, and submit one subject per job:</p>
+      <p><a href="freesurfer_reconall_slurm.sh" download>Download freesurfer_reconall_slurm.sh</a></p>
+      <pre><code>sbatch freesurfer_reconall_slurm.sh \
+  sub-001 \
+  /path/to/sub-001_T1w.nii.gz \
+  /path/to/reconall_xsection
+
+# Native submillimetre processing
+sbatch --export=ALL,HIRES=1 freesurfer_reconall_slurm.sh \
+  sub-001 /path/to/sub-001_T1w.nii.gz /path/to/reconall_xsection</code></pre>
+
+      <h2 id="checklist">10. Completion checklist</h2>
+      <ul>
+        <li>☐ Input identity, orientation, coverage and quality confirmed</li>
+        <li>☐ FreeSurfer version and command recorded</li>
+        <li>☐ <code>recon-all.log</code> reports successful completion</li>
+        <li>☐ Skull strip, aseg, white and pial surfaces inspected in three planes</li>
+        <li>☐ QC status and reviewer recorded</li>
+        <li>☐ Corrections and reruns documented</li>
+        <li>☐ Only QC-passed subjects included in exported tables</li>
+      </ul>
+
+      <h2>Official references</h2>
+      <ul>
+        <li><a href="https://surfer.nmr.mgh.harvard.edu/fswiki/recon-all">FreeSurfer recon-all documentation</a></li>
+        <li><a href="https://surfer.nmr.mgh.harvard.edu/fswiki/HighFieldRecon">FreeSurfer guidance for 7T reconstruction</a></li>
+        <li><a href="https://surfer.nmr.mgh.harvard.edu/fswiki/SubmillimeterRecon">Native submillimetre reconstruction</a></li>
+        <li><a href="https://surfer.nmr.mgh.harvard.edu/fswiki/QATools">FreeSurfer QA Tools</a></li>
+        <li><a href="https://surfer.nmr.mgh.harvard.edu/fswiki/asegstats2table">asegstats2table</a> and <a href="https://surfer.nmr.mgh.harvard.edu/fswiki/aparcstats2table">aparcstats2table</a></li>
+      </ul>
+    </main>
+    <footer>Melbourne Brain Centre Imaging Unit · Research workflow guide</footer>
+  </div>
+
+  <script>
+    firebase.auth().onAuthStateChanged(async user => {
+      const gateMessage = document.getElementById("gateMessage");
+      if (!user) {
+        gateMessage.innerHTML = '<a href="../../web/login.html">Log in</a> to view this tutorial.';
+        return;
+      }
+      try {
+        await user.getIdToken(true);
+        await db.enableNetwork();
+        const admin = await userIsAdmin(user);
+        const approvedAccount = await requireApprovedUser(user);
+        const profile = await getCurrentProfile(user);
+        const segmentationAccess = profile?.tools?.seg?.approved === true;
+        if (admin || (approvedAccount && segmentationAccess)) {
+          document.getElementById("gate").style.display = "none";
+          document.getElementById("tutorial").style.display = "block";
+        } else {
+          gateMessage.textContent = "Segmentation tutorial access has not been approved for this account. Request access from the dashboard.";
+        }
+      } catch (error) {
+        console.error(error);
+        gateMessage.textContent = "Unable to verify access. Return to the dashboard and try again.";
+      }
+    });
+  </script>
+</body>
+</html>
