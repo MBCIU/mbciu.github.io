@@ -27,6 +27,8 @@ The site uses Firebase Authentication and Cloud Firestore. Browser checks improv
 
 4. Enable only the required Firebase Authentication providers and restrict authorized domains to the production MBCIU domain and any explicitly required development domain.
 
+5. In EmailJS, restrict the public key to the production MBCIU origin. The `template_signup_alert` template receives only `email`, `tool`, and `request_type`; configure its recipient as the fixed administrator address rather than accepting a recipient from the browser.
+
 ## Security properties
 
 - New users can create only their own pending profile.
@@ -35,6 +37,7 @@ The site uses Firebase Authentication and Cloud Firestore. Browser checks improv
 - Only administrators listed in the locked `admins` collection can list users or change approvals.
 - Unknown collections are denied by default.
 - Tool identifiers are allow-listed.
+- Spartan workflow access is requested and approved independently through the `spartan` tool identifier.
 
 ## GitHub Pages limitation
 
