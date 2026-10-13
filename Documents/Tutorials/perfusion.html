@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ASL perfusion analysis | MBCIU</title>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script><script src="../../web/firebase-config.js"></script><style>
+    :root { --blue:#155eef; --navy:#102a43; --ink:#243b53; --muted:#627d98; --line:#d9e2ec; --paper:#fff; --wash:#f4f7fb; --good:#087f5b; --warn:#9a6700; }
+    * { box-sizing:border-box; }
+    body { margin:0; font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--ink); background:var(--wash); }
+    header { color:#fff; background:linear-gradient(135deg,var(--navy),#2251a3); padding:36px 22px; }
+    header div, main { max-width:1050px; margin:auto; }
+    h1 { margin:0 0 8px; font-size:clamp(2rem,4vw,3rem); line-height:1.15; }
+    h2 { color:var(--navy); margin-top:2.3rem; padding-bottom:.35rem; border-bottom:2px solid var(--line); }
+    h3 { color:#1f4b7a; margin-top:1.7rem; }
+    a { color:var(--blue); }
+    header a { color:#fff; }
+    main { background:var(--paper); min-height:70vh; padding:30px clamp(20px,5vw,64px) 60px; box-shadow:0 8px 30px #102a4312; }
+    nav { background:#edf2ff; border:1px solid #c7d2fe; border-radius:12px; padding:16px 20px; }
+    nav ul { columns:2; margin:.5rem 0; }
+    code { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+    pre { overflow:auto; color:#e6edf3; background:#111827; border-radius:10px; padding:18px; line-height:1.5; }
+    .callout { border-left:5px solid var(--blue); background:#eff6ff; padding:13px 16px; margin:20px 0; }
+    .warning { border-color:#e6a700; background:#fff8db; }
+    .success { border-color:var(--good); background:#e9fbf4; }
+    table { width:100%; border-collapse:collapse; margin:16px 0; }
+    th,td { text-align:left; vertical-align:top; border:1px solid var(--line); padding:10px 12px; }
+    th { background:#eef2f7; }
+    .steps { counter-reset:step; padding:0; }
+    .steps > li { list-style:none; counter-increment:step; margin:16px 0; padding-left:42px; position:relative; }
+    .steps > li::before { content:counter(step); position:absolute; left:0; top:1px; width:28px; height:28px; border-radius:50%; display:grid; place-items:center; color:#fff; background:var(--blue); font-weight:700; }
+    .tag { display:inline-block; border-radius:999px; padding:2px 9px; background:#dbeafe; color:#1e3a8a; font-size:.85rem; }
+    #gate { max-width:650px; margin:80px auto; padding:30px; background:#fff; border-radius:14px; box-shadow:0 8px 30px #102a4320; text-align:center; }
+    #tutorial { display:none; }
+    footer { text-align:center; color:var(--muted); padding:25px; }
+    @media (max-width:700px) { nav ul { columns:1; } table { font-size:.9rem; } }
+  </style></head><body>
+<section id="gate"><h1 style="color:#102a43;font-size:1.7rem">Checking tutorial access…</h1><p id="gateMessage">Please wait.</p></section><div id="tutorial"><header><div><p><a href="../../web/dashboard.html">← Back to Dashboard</a></p><h1>ASL perfusion analysis</h1><p>Acquisition-aware BASIL processing and cerebral blood flow QC</p></div></header><main>
+<div class="callout">Research training guide · Updated 14 October 2026. Examples use placeholder paths and require adaptation to your acquisition and installed software. Test one participant before scaling to a cohort.</div>
+<section><h2>1. Decode the acquisition</h2><p>Determine whether the acquisition is PASL or pCASL, the label/control ordering, timing scheme, repeats and calibration strategy. Obtain labelling duration, post-label delays or inversion times, slice timing for 2D acquisitions and labelling efficiency assumptions. Keep a record of the M0 calibration image and its relationship to the ASL run.</p></section><section><h2>2. Prepare a verified configuration</h2><p>Open the BASIL GUI or build an <code>oxford_asl</code> command using documentation for your installed release. The GUI can help construct the command. Start by checking available options:</p><pre><code>oxford_asl --help
+# Configure input ordering, timing, calibration and registration
+# from the acquisition protocol; save the final command in your log.</code></pre><p>There is no universal command for all ASL acquisitions. Verify whether the software expects inversion time or post-label delay in the selected mode. Review label/control ordering before interpreting the sign of the difference signal.</p></section><section><h2>3. Process and register</h2><p>Use a workflow appropriate to the acquisition for motion correction, distortion correction, perfusion modelling, calibration and anatomical registration. With multi-delay data, assess arterial transit time as well as perfusion. Evaluate partial-volume correction deliberately rather than enabling it without checking tissue segmentation and alignment.</p></section><section><h2>4. Review outputs</h2><ul><li>Inspect raw pairs and difference images for motion or subtraction artefacts.</li><li>Check ASL-to-anatomical alignment, especially near frontal and temporal regions.</li><li>Review calibration-image quality and model fit.</li><li>Check vascular signal, coverage, negative or extreme values and between-session consistency.</li></ul><p>Document whether values are calibrated cerebral blood flow or relative perfusion. Calibrated outputs require validated calibration and unit conventions. Preserve maps, registration evidence, processing settings and regional coverage with every exported table.</p></section><h2>Official tutorials and documentation</h2><ul><li><a href="https://asl-docs.readthedocs.io/en/latest/">BASIL documentation</a></li><li><a href="https://asl-docs.readthedocs.io/en/latest/oxford_asl.html">Oxford_ASL input requirements</a></li></ul>
+<h2>Record your analysis</h2><p>Retain the participant/session manifest, input checksums, software versions, commands, completion status, QC reviewer and decision, and reasons for missing or excluded measurements. Keep raw inputs separate from derivatives.</p></main><footer>Melbourne Brain Centre Imaging Unit · Imaging analysis tutorials</footer></div>  <script>
+    firebase.auth().onAuthStateChanged(async user => {
+      const gateMessage = document.getElementById("gateMessage");
+      if (!user) {
+        gateMessage.innerHTML = '<a href="../../web/login.html">Log in</a> to view this tutorial.';
+        return;
+      }
+      try {
+        await user.getIdToken(true);
+        await db.enableNetwork();
+        const admin = await userIsAdmin(user);
+        const approvedAccount = await requireApprovedUser(user);
+        const profile = await getCurrentProfile(user);
+        const toolAccess = profile?.tools?.ASL?.approved === true;
+        if (admin || (approvedAccount && toolAccess)) {
+          document.getElementById("gate").style.display = "none";
+          document.getElementById("tutorial").style.display = "block";
+        } else {
+          gateMessage.textContent = "ASL perfusion analysis access has not been approved for this account. Request access from the dashboard.";
+        }
+      } catch (error) {
+        console.error(error);
+        gateMessage.textContent = "Unable to verify access. Return to the dashboard and try again.";
+      }
+    });
+  </script>
+</body></html>

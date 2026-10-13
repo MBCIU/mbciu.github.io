@@ -1,0 +1,65 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Task fMRI analysis | MBCIU</title>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script><script src="../../web/firebase-config.js"></script><style>
+    :root { --blue:#155eef; --navy:#102a43; --ink:#243b53; --muted:#627d98; --line:#d9e2ec; --paper:#fff; --wash:#f4f7fb; --good:#087f5b; --warn:#9a6700; }
+    * { box-sizing:border-box; }
+    body { margin:0; font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--ink); background:var(--wash); }
+    header { color:#fff; background:linear-gradient(135deg,var(--navy),#2251a3); padding:36px 22px; }
+    header div, main { max-width:1050px; margin:auto; }
+    h1 { margin:0 0 8px; font-size:clamp(2rem,4vw,3rem); line-height:1.15; }
+    h2 { color:var(--navy); margin-top:2.3rem; padding-bottom:.35rem; border-bottom:2px solid var(--line); }
+    h3 { color:#1f4b7a; margin-top:1.7rem; }
+    a { color:var(--blue); }
+    header a { color:#fff; }
+    main { background:var(--paper); min-height:70vh; padding:30px clamp(20px,5vw,64px) 60px; box-shadow:0 8px 30px #102a4312; }
+    nav { background:#edf2ff; border:1px solid #c7d2fe; border-radius:12px; padding:16px 20px; }
+    nav ul { columns:2; margin:.5rem 0; }
+    code { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+    pre { overflow:auto; color:#e6edf3; background:#111827; border-radius:10px; padding:18px; line-height:1.5; }
+    .callout { border-left:5px solid var(--blue); background:#eff6ff; padding:13px 16px; margin:20px 0; }
+    .warning { border-color:#e6a700; background:#fff8db; }
+    .success { border-color:var(--good); background:#e9fbf4; }
+    table { width:100%; border-collapse:collapse; margin:16px 0; }
+    th,td { text-align:left; vertical-align:top; border:1px solid var(--line); padding:10px 12px; }
+    th { background:#eef2f7; }
+    .steps { counter-reset:step; padding:0; }
+    .steps > li { list-style:none; counter-increment:step; margin:16px 0; padding-left:42px; position:relative; }
+    .steps > li::before { content:counter(step); position:absolute; left:0; top:1px; width:28px; height:28px; border-radius:50%; display:grid; place-items:center; color:#fff; background:var(--blue); font-weight:700; }
+    .tag { display:inline-block; border-radius:999px; padding:2px 9px; background:#dbeafe; color:#1e3a8a; font-size:.85rem; }
+    #gate { max-width:650px; margin:80px auto; padding:30px; background:#fff; border-radius:14px; box-shadow:0 8px 30px #102a4320; text-align:center; }
+    #tutorial { display:none; }
+    footer { text-align:center; color:var(--muted); padding:25px; }
+    @media (max-width:700px) { nav ul { columns:1; } table { font-size:.9rem; } }
+  </style></head><body>
+<section id="gate"><h1 style="color:#102a43;font-size:1.7rem">Checking tutorial access…</h1><p id="gateMessage">Please wait.</p></section><div id="tutorial"><header><div><p><a href="../../web/dashboard.html">← Back to Dashboard</a></p><h1>Task fMRI analysis</h1><p>Design, first-level modelling and interpretable contrasts</p></div></header><main>
+<div class="callout">Research training guide · Updated 14 October 2026. Examples use placeholder paths and require adaptation to your acquisition and installed software. Test one participant before scaling to a cohort.</div>
+<section><h2>1. Audit events and timing</h2><p>Match each BOLD run with its event table. Verify onsets and durations in seconds relative to the start of the imaging run. Check discarded volumes, scanner triggers, missed responses and run-specific repetition time. Plot events against the acquired time series before building the model.</p></section><section><h2>2. Preprocess and inspect</h2><p>Choose a consistent preprocessing workflow and review registration, distortion correction and motion. If inputs are already preprocessed, explicitly disable duplicated operations in downstream software. Keep task runs and sessions distinguishable throughout the workflow.</p></section><section><h2>3. Build a first-level model</h2><p>In FSL FEAT, define explanatory variables for the scientific conditions, their haemodynamic response treatment, nuisance regressors and contrasts. For the custom three-column timing format, each row gives onset, duration and amplitude.</p><pre><code># Example condition timing file: onset_seconds duration_seconds amplitude
+12 2 1
+36 2 1
+60 2 1</code></pre><p>Set the high-pass filter with respect to the design. Inspect the design matrix, regressor correlations and contrast estimability. Decide how motion outliers and incorrect trials are handled before cohort analysis.</p></section><section><h2>4. Combine runs and participants</h2><p>Review first-level model residuals and registration before combining runs. Use a model appropriate to repeated observations within participants and the group question. Specify covariates and inference procedures in advance. Preserve effect estimates and their uncertainty, rather than exporting thresholded activation images alone.</p></section><section><h2>5. Practical QC exercise</h2><p>For one pilot participant, compare the event timeline with the design matrix, inspect a contrast image over the anatomical scan, and explain what a positive contrast value means. Then check whether that explanation remains correct when conditions are reordered. Record task completion, usable runs, motion and exclusions in the cohort manifest.</p></section><h2>Official tutorials and documentation</h2><ul><li><a href="https://fsl.fmrib.ox.ac.uk/fsl/docs/task_fmri/feat/user_guide.html">FSL FEAT user guide</a></li><li><a href="https://fmriprep.org/en/stable/usage.html">fMRIPrep preprocessing options</a></li></ul>
+<h2>Record your analysis</h2><p>Retain the participant/session manifest, input checksums, software versions, commands, completion status, QC reviewer and decision, and reasons for missing or excluded measurements. Keep raw inputs separate from derivatives.</p></main><footer>Melbourne Brain Centre Imaging Unit · Imaging analysis tutorials</footer></div>  <script>
+    firebase.auth().onAuthStateChanged(async user => {
+      const gateMessage = document.getElementById("gateMessage");
+      if (!user) {
+        gateMessage.innerHTML = '<a href="../../web/login.html">Log in</a> to view this tutorial.';
+        return;
+      }
+      try {
+        await user.getIdToken(true);
+        await db.enableNetwork();
+        const admin = await userIsAdmin(user);
+        const approvedAccount = await requireApprovedUser(user);
+        const profile = await getCurrentProfile(user);
+        const toolAccess = profile?.tools?.tfMRI?.approved === true;
+        if (admin || (approvedAccount && toolAccess)) {
+          document.getElementById("gate").style.display = "none";
+          document.getElementById("tutorial").style.display = "block";
+        } else {
+          gateMessage.textContent = "Task fMRI analysis access has not been approved for this account. Request access from the dashboard.";
+        }
+      } catch (error) {
+        console.error(error);
+        gateMessage.textContent = "Unable to verify access. Return to the dashboard and try again.";
+      }
+    });
+  </script>
+</body></html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Longitudinal hippocampal QC | MBCIU</title>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script><script src="../../web/firebase-config.js"></script><style>
+    :root { --blue:#155eef; --navy:#102a43; --ink:#243b53; --muted:#627d98; --line:#d9e2ec; --paper:#fff; --wash:#f4f7fb; --good:#087f5b; --warn:#9a6700; }
+    * { box-sizing:border-box; }
+    body { margin:0; font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--ink); background:var(--wash); }
+    header { color:#fff; background:linear-gradient(135deg,var(--navy),#2251a3); padding:36px 22px; }
+    header div, main { max-width:1050px; margin:auto; }
+    h1 { margin:0 0 8px; font-size:clamp(2rem,4vw,3rem); line-height:1.15; }
+    h2 { color:var(--navy); margin-top:2.3rem; padding-bottom:.35rem; border-bottom:2px solid var(--line); }
+    h3 { color:#1f4b7a; margin-top:1.7rem; }
+    a { color:var(--blue); }
+    header a { color:#fff; }
+    main { background:var(--paper); min-height:70vh; padding:30px clamp(20px,5vw,64px) 60px; box-shadow:0 8px 30px #102a4312; }
+    nav { background:#edf2ff; border:1px solid #c7d2fe; border-radius:12px; padding:16px 20px; }
+    nav ul { columns:2; margin:.5rem 0; }
+    code { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+    pre { overflow:auto; color:#e6edf3; background:#111827; border-radius:10px; padding:18px; line-height:1.5; }
+    .callout { border-left:5px solid var(--blue); background:#eff6ff; padding:13px 16px; margin:20px 0; }
+    .warning { border-color:#e6a700; background:#fff8db; }
+    .success { border-color:var(--good); background:#e9fbf4; }
+    table { width:100%; border-collapse:collapse; margin:16px 0; }
+    th,td { text-align:left; vertical-align:top; border:1px solid var(--line); padding:10px 12px; }
+    th { background:#eef2f7; }
+    .steps { counter-reset:step; padding:0; }
+    .steps > li { list-style:none; counter-increment:step; margin:16px 0; padding-left:42px; position:relative; }
+    .steps > li::before { content:counter(step); position:absolute; left:0; top:1px; width:28px; height:28px; border-radius:50%; display:grid; place-items:center; color:#fff; background:var(--blue); font-weight:700; }
+    .tag { display:inline-block; border-radius:999px; padding:2px 9px; background:#dbeafe; color:#1e3a8a; font-size:.85rem; }
+    #gate { max-width:650px; margin:80px auto; padding:30px; background:#fff; border-radius:14px; box-shadow:0 8px 30px #102a4320; text-align:center; }
+    #tutorial { display:none; }
+    footer { text-align:center; color:var(--muted); padding:25px; }
+    @media (max-width:700px) { nav ul { columns:1; } table { font-size:.9rem; } }
+  </style></head><body>
+<section id="gate"><h1 style="color:#102a43;font-size:1.7rem">Checking tutorial access…</h1><p id="gateMessage">Please wait.</p></section><div id="tutorial"><header><div><p><a href="../../web/dashboard.html">← Back to Dashboard</a></p><h1>Longitudinal hippocampal QC</h1><p>Within-participant processing, visual review and missing-data tracking</p></div></header><main>
+<div class="callout">Research training guide · Updated 14 October 2026. Examples use placeholder paths and require adaptation to your acquisition and installed software. Test one participant before scaling to a cohort.</div>
+<section><h2>1. Build a longitudinal manifest</h2><p>Record participant, visit, acquisition date, input path and expected output directory. Verify each visit independently. Separate missing raw inputs, failed processing, missing output files and QC exclusions. Never substitute zero for an unavailable volume.</p></section><section><h2>2. Run the longitudinal stream</h2><p>Complete and inspect cross-sectional reconstructions first. Build the within-participant template, then process each visit using that template. These commands illustrate the reconstruction sequence; hippocampal subfield segmentation is a separate step using tools appropriate to your pinned FreeSurfer release.</p><pre><code>recon-all -base sub-001_base -tp sub-001_ses-01 -tp sub-001_ses-02 -all
+recon-all -long sub-001_ses-01 sub-001_base -all
+recon-all -long sub-001_ses-02 sub-001_base -all</code></pre><p>Maintain the same FreeSurfer version and subfield atlas across visits. Confirm actual output names rather than assuming a v21/v22 filename from another release.</p></section><section><h2>3. Inspect the label maps</h2><p>Review anatomical images and subfield overlays in all three planes, covering head, body and tail on both sides. Use Freeview or another viewer/gallery that preserves alignment and label colours. Retain screenshots and reviewer decisions. A gallery must cover the full hippocampus; one selected slice cannot establish a pass.</p><p>Check boundaries, holes, implausible labels, adjacent CSF inclusion and consistency across visits. Review the original anatomy alongside the labels when an overlay is ambiguous.</p></section><section><h2>4. Screen cohort measurements</h2><p>Plot volumes by region, hemisphere and visit. Flag extreme values, asymmetry and unexpected within-participant change for visual review. Use the exact ENIGMA protocol selected for the study if claiming ENIGMA compliance; a generic z-score screen alone is not an ENIGMA assessment.</p><p>Statistical flags trigger review and do not automatically justify exclusion. Record the chosen thresholds, reference population, visual outcome and final inclusion decision.</p></section><section><h2>5. Resolve missing data</h2><p>Join extracted measurements to the expected manifest using participant and visit identifiers. Check job state, logs and expected outputs for every unmatched row. Increase wall time only when logs or scheduler accounting show a timeout; investigate memory, input or anatomical failures separately. Keep rerun attempts and their QC outcomes traceable.</p></section><h2>Official tutorials and documentation</h2><ul><li><a href="https://surfer.nmr.mgh.harvard.edu/fswiki/LongitudinalProcessing">FreeSurfer longitudinal workflow</a></li><li><a href="https://surfer.nmr.mgh.harvard.edu/fswiki/HippocampalSubfields">FreeSurfer hippocampal subfields</a></li><li><a href="https://enigma.ini.usc.edu/protocols/imaging-protocols/">ENIGMA structural protocols</a></li></ul>
+<h2>Record your analysis</h2><p>Retain the participant/session manifest, input checksums, software versions, commands, completion status, QC reviewer and decision, and reasons for missing or excluded measurements. Keep raw inputs separate from derivatives.</p></main><footer>Melbourne Brain Centre Imaging Unit · Imaging analysis tutorials</footer></div>  <script>
+    firebase.auth().onAuthStateChanged(async user => {
+      const gateMessage = document.getElementById("gateMessage");
+      if (!user) {
+        gateMessage.innerHTML = '<a href="../../web/login.html">Log in</a> to view this tutorial.';
+        return;
+      }
+      try {
+        await user.getIdToken(true);
+        await db.enableNetwork();
+        const admin = await userIsAdmin(user);
+        const approvedAccount = await requireApprovedUser(user);
+        const profile = await getCurrentProfile(user);
+        const toolAccess = profile?.tools?.seg?.approved === true;
+        if (admin || (approvedAccount && toolAccess)) {
+          document.getElementById("gate").style.display = "none";
+          document.getElementById("tutorial").style.display = "block";
+        } else {
+          gateMessage.textContent = "Longitudinal hippocampal QC access has not been approved for this account. Request access from the dashboard.";
+        }
+      } catch (error) {
+        console.error(error);
+        gateMessage.textContent = "Unable to verify access. Return to the dashboard and try again.";
+      }
+    });
+  </script>
+</body></html>
