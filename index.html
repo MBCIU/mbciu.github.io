@@ -46,11 +46,14 @@
   <!-- Main Content -->
   <div class="relative z-10 max-w-3xl mx-auto px-4 py-10">
     <!-- Header -->
-    <div class="flex justify-between items-center mb-10">
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-10">
       <div class="flex items-center gap-3">
         <img src="/web/logo.svg" alt="Logo" class="h-10 w-10 rounded-full" onerror="this.style.display='none';"/>
         <h1 class="text-2xl font-bold">MBCIU Tools Portal</h1>
       </div>
+      <a href="https://anif.org.au/" target="_blank" rel="noopener noreferrer" aria-label="National Imaging Facility (opens in a new tab)" class="inline-flex items-center rounded-lg bg-white p-2 shadow-sm shrink-0">
+        <img src="/nif-logo.svg" alt="National Imaging Facility" width="183" height="62" class="h-10 w-auto" loading="eager"/>
+      </a>
       <div class="flex items-center gap-3">
         <button onclick="toggleDarkMode()" class="text-sm hover:underline">🌓 Toggle Mode</button>
         <button id="logoutBtn" onclick="logout()" class="text-sm text-red-500 hover:underline hidden">Logout</button>
